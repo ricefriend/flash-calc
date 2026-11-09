@@ -58,6 +58,23 @@
   .rformula{font-size:11.5px;color:var(--faint);margin-top:9px;font-variant-numeric:tabular-nums;line-height:1.65;overflow-wrap:anywhere}
   .rerr{color:var(--red)}
 
+  /* 标尺 */
+  .ruler{margin-top:12px}
+  .rtrack{position:relative;height:30px;border-radius:7px;background:#221d17;box-shadow:inset 0 0 0 1px #332c24;overflow:hidden}
+  .ruler.zones .rtrack{height:34px;border-radius:6px}
+  .rzone{position:absolute;top:0;bottom:0;background:linear-gradient(180deg,rgba(255,179,71,.52),rgba(255,179,71,.2));border-left:1px solid rgba(255,179,71,.62);border-right:1px solid rgba(255,179,71,.62)}
+  .rpin{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#fff;border-radius:1px;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 0 9px rgba(255,255,255,.55)}
+  .rseg{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font:600 9px/1 inherit;letter-spacing:-.02em;overflow:hidden;white-space:nowrap;border-right:1px solid rgba(0,0,0,.45)}
+  .rlabels{position:relative;height:13px;margin-top:5px}
+  .rlab{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;color:var(--faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+  .rowtop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+  .rowtop .lbl{margin-bottom:0}
+  .mini{display:flex;gap:2px;background:#221d17;border:1px solid var(--line);border-radius:9px;padding:2px}
+  .mini button{border:0;background:transparent;color:var(--faint);font:600 11px/1 inherit;font-family:inherit;padding:6px 10px;border-radius:7px;cursor:pointer}
+  .mini button.on{background:#3d3323;color:var(--text)}
+  .to{text-align:center;font-size:11px;color:var(--faint);margin:7px 0 6px;letter-spacing:.1em}
+
   .row{margin-top:14px}
   .row:first-child{margin-top:0}
   .lbl{font-size:11px;letter-spacing:.1em;color:var(--faint);margin-bottom:7px}
@@ -132,6 +149,7 @@
   <div class="rbig"><span id="rval">9.0</span><span id="runit">米</span></div>
   <div class="rsub" id="rsub"></div>
   <div class="rband" id="rband"></div>
+  <div id="ruler"></div>
   <div class="rformula" id="rformula"></div>
 </section>
 
@@ -164,14 +182,41 @@
   </div>
 
   <div class="row hidden" id="rowD">
-    <div class="lbl">到主体的距离</div>
-    <div class="stepper">
-      <button type="button" id="dMinus" aria-label="减小距离">−</button>
-      <div class="mid">
-        <input type="number" id="dIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="3">
-        <span class="suffix">米</span>
+    <div class="rowtop">
+      <div class="lbl">到主体的距离</div>
+      <div class="mini" id="distMode">
+        <button type="button" data-dm="point" class="on">单点</button>
+        <button type="button" data-dm="range">范围</button>
       </div>
-      <button type="button" id="dPlus" aria-label="增大距离">+</button>
+    </div>
+    <div id="distPoint">
+      <div class="stepper">
+        <button type="button" id="dMinus" aria-label="减小距离">−</button>
+        <div class="mid">
+          <input type="number" id="dIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="3">
+          <span class="suffix">米</span>
+        </div>
+        <button type="button" id="dPlus" aria-label="增大距离">+</button>
+      </div>
+    </div>
+    <div id="distRange" class="hidden">
+      <div class="stepper">
+        <button type="button" id="dLoMinus" aria-label="近端减小">−</button>
+        <div class="mid">
+          <input type="number" id="dLoIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="2">
+          <span class="suffix">米</span>
+        </div>
+        <button type="button" id="dLoPlus" aria-label="近端增大">+</button>
+      </div>
+      <div class="to">到</div>
+      <div class="stepper">
+        <button type="button" id="dHiMinus" aria-label="远端减小">−</button>
+        <div class="mid">
+          <input type="number" id="dHiIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="4">
+          <span class="suffix">米</span>
+        </div>
+        <button type="button" id="dHiPlus" aria-label="远端增大">+</button>
+      </div>
     </div>
   </div>
 
@@ -353,6 +398,74 @@ function isoRating(iso){
   const amount = thirds >= 3 ? (thirds / 3) + ' 档' : thirds + '/3 档';
   return { base, stops, text: `相当于把 ${base} 的卷${stops > 0 ? '过曝' : '欠曝'} ${amount}` };
 }
+/* ---------- 距离是一段区间时 ---------- */
+
+/* 同一档光圈能不能罩住 [lo,hi]：窗口给出可用光圈的上下界 */
+function fRangeWindow(gn, lo, hi, tol){
+  const min = gn / (lo * Math.pow(2, tol.over / 2));   // 再开大，近端过曝
+  const max = gn * Math.pow(2, tol.under / 2) / hi;    // 再收小，远端欠曝
+  return { min, max, valid: min <= max };
+}
+
+/* 某一档功率在宽容度内覆盖的距离段 */
+function powerCover(gnFull, f, k, tol){
+  const dFull = gnFull * Math.sqrt(POWERS[k]) / f;
+  return {
+    dFull,
+    min: dFull / Math.pow(2, tol.over / 2),
+    max: dFull * Math.pow(2, tol.under / 2)
+  };
+}
+
+/* 第 k 档功率负责的距离段：相邻两档在 dFull·2^(-(k+0.5)/6) 处换档 */
+function zoneSpan(dFull, k){
+  return {
+    lo: dFull * Math.pow(2, -(k + 0.5) / 6),
+    hi: dFull * Math.pow(2, -(k - 0.5) / 6)
+  };
+}
+
+/* 把 [lo,hi] 切成“一段一档”的功率分区 */
+function powerZones(gnFull, f, lo, hi){
+  const dFull = gnFull / f;
+  const out = [];
+  for (let k = 0; k <= 21; k++){
+    const s = zoneSpan(dFull, k);
+    const from = Math.max(s.lo, lo);
+    const to = Math.min(s.hi, hi);
+    if (to > from + 1e-9) out.push({ k, from, to });
+  }
+  return out.sort((a, b) => a.from - b.from);
+}
+
+/* 推荐一档功率：能罩住整段就选余量最大的，罩不住就取两端误差最平衡的 */
+function recommendPower(gnFull, f, lo, hi, tol){
+  const needFar  = hi / Math.pow(2, tol.under / 2);    // dFull 的下限
+  const needNear = lo * Math.pow(2, tol.over / 2);     // dFull 的上限
+  const idealCovers = needFar <= needNear;
+  const target = Math.sqrt(needFar * needNear);
+  if (!isFinite(target) || target <= 0) return null;
+  const frac = Math.pow(target * f / gnFull, 2);
+  const k = Math.max(0, Math.min(21, Math.round(-3 * Math.log2(frac))));
+  const cover = powerCover(gnFull, f, k, tol);
+  const errNear = 2 * Math.log2(cover.dFull / lo);
+  const errFar  = 2 * Math.log2(cover.dFull / hi);
+  const overflow = Math.max(0, errNear - tol.over, -tol.under - errFar);
+  return { k, idealCovers, cover, errNear, errFar, overflow,
+           spans: cover.min <= lo + 1e-9 && cover.max >= hi - 1e-9 };
+}
+
+/* 区间下的光圈推荐 */
+function recommendAperture(gn, lo, hi, tol, list){
+  const w = fRangeWindow(gn, lo, hi, tol);
+  const center = w.valid ? Math.sqrt(w.min * w.max) : gn / Math.sqrt(lo * hi);
+  const f = nearestF(list, center);
+  const errNear = 2 * Math.log2(gn / (lo * f));
+  const errFar  = 2 * Math.log2(gn / (hi * f));
+  return { f, window: w, errNear, errFar,
+           overflow: Math.max(0, errNear - tol.over, -tol.under - errFar),
+           spans: f >= w.min - 1e-9 && f <= w.max + 1e-9 };
+}
 /* ============================================================
    CORE:END
    ============================================================ */
@@ -361,7 +474,8 @@ function isoRating(iso){
 const KEY = 'flashcalc.v1';
 const S = {
   mode:'dist', iso:400, flash:'tt350', gn:36,
-  power:6, f:5.6, d:3.0, scale:'half', tol:'neg'
+  power:6, f:5.6, d:3.0, dLo:2.0, dHi:4.0, distMode:'point',
+  scale:'half', tol:'neg'
 };
 
 function clamp(n, lo, hi){ return Math.min(hi, Math.max(lo, n)); }
@@ -380,6 +494,10 @@ function load(){
     }
     S.gn    = clamp(Number(S.gn) || 36, 1, 200);
     S.d     = clamp(Number(S.d) || 3, 0.2, 60);
+    S.dLo   = clamp(Number(S.dLo) || 2, 0.2, 60);
+    S.dHi   = clamp(Number(S.dHi) || 4, 0.2, 60);
+    if (S.dLo > S.dHi){ const t = S.dLo; S.dLo = S.dHi; S.dHi = t; }
+    if (S.distMode !== 'range') S.distMode = 'point';
     S.f     = Number(S.f) || 8;
     S.power = clamp(Math.round(Number(S.power) || 0), 0, 21);
     if (!['dist','fnum','power'].includes(S.mode)) S.mode = 'dist';
@@ -437,6 +555,10 @@ const el = {
   powerSel:$('powerSel'), rowPower:$('rowPower'),
   fSel:$('fSel'), rowF:$('rowF'),
   dIn:$('dIn'), rowD:$('rowD'), dMinus:$('dMinus'), dPlus:$('dPlus'),
+  distMode:$('distMode'), distPoint:$('distPoint'), distRange:$('distRange'),
+  dLoIn:$('dLoIn'), dHiIn:$('dHiIn'),
+  dLoMinus:$('dLoMinus'), dLoPlus:$('dLoPlus'), dHiMinus:$('dHiMinus'), dHiPlus:$('dHiPlus'),
+  ruler:$('ruler'),
   tolSel:$('tolSel'), scaleSel:$('scaleSel'),
   tbl:$('tbl'), tblTitle:$('tblTitle'), th2:$('th2'), th3:$('th3')
 };
@@ -486,6 +608,71 @@ function fillApertures(){
   el.fSel.value = String(S.f);
 }
 
+/* ---------- 标尺 ---------- */
+/* 对数刻度：距离和光圈都是按档走的，线性刻度会把近端挤扁 */
+function scalePct(v, lo, hi){
+  const t = Math.log(v / lo) / Math.log(hi / lo);
+  return Math.max(4, Math.min(96, t * 100));
+}
+
+/* 区间带标尺：给“这个设置在哪一段有效”用 */
+function rulerBandHTML({ lo, hi, band, mark, fmt }){
+  const a = scalePct(band.min, lo, hi);
+  const b = scalePct(band.max, lo, hi);
+  const m = scalePct(mark, lo, hi);
+  const labels = (b - a) < 20
+    ? `<span class="rlab" style="left:${(a + b) / 2}%">${fmt(band.min)} – ${fmt(band.max)}</span>`
+    : `<span class="rlab" style="left:${a}%">${fmt(band.min)}</span>` +
+      `<span class="rlab" style="left:${b}%">${fmt(band.max)}</span>`;
+  return `<div class="ruler">
+    <div class="rtrack">
+      <div class="rzone" style="left:${a}%;right:${100 - b}%"></div>
+      <div class="rpin" style="left:${m}%"></div>
+    </div>
+    <div class="rlabels">${labels}</div>
+  </div>`;
+}
+
+/* 分区标尺：给“距离 → 功率档”的对应关系用。
+   相邻的 1/3 档合并成整档一组，否则六段挤在一起标签会打架 */
+function rulerZonesHTML({ lo, hi, zones, recK, fmt }){
+  const groups = [];
+  for (const z of zones){
+    const base = Math.floor(z.k / 3);
+    const last = groups[groups.length - 1];
+    if (last && last.base === base){ last.to = z.to; last.ks.push(z.k); }
+    else groups.push({ base, from: z.from, to: z.to, ks: [z.k] });
+  }
+
+  const segs = groups.map(g => {
+    const a = scalePct(g.from, lo, hi);
+    const b = scalePct(g.to, lo, hi);
+    const w = b - a;
+    const bright = 70 - (g.base / 7) * 36;        // 整档越高（光越弱）颜色越沉
+    const fg = bright > 52 ? '#1c1408' : '#f2e7d2';
+    const label = w >= 12 ? '1/' + Math.pow(2, g.base) : '';
+    return `<div class="rseg" style="left:${a}%;width:${w}%;background:hsl(38 74% ${bright}%)">` +
+      (label ? `<span style="color:${fg}">${label}</span>` : '') + '</div>';
+  }).join('');
+
+  const rz = zones.find(z => z.k === recK);
+  const pin = rz
+    ? `<div class="rpin" style="left:${scalePct((rz.from + rz.to) / 2, lo, hi)}%"></div>`
+    : '';
+
+  const marks = [lo, ...groups.map(g => g.to)];
+  let last = -99;
+  const labels = marks.map(v => {
+    const p = scalePct(v, lo, hi);
+    if (p - last < 9) return '';
+    last = p;
+    return `<span class="rlab" style="left:${p}%">${fmt(v)}</span>`;
+  }).join('');
+
+  return `<div class="ruler zones"><div class="rtrack">${segs}${pin}</div>
+    <div class="rlabels">${labels}</div></div>`;
+}
+
 /* ---------- 主渲染 ---------- */
 function render(){
   const flash = FLASHES.find(x => x.id === S.flash) || FLASHES[0];
@@ -508,6 +695,16 @@ function render(){
   el.rowF.classList.toggle('hidden', S.mode === 'fnum');
   el.rowD.classList.toggle('hidden', S.mode === 'dist');
   el.rowGn.classList.toggle('hidden', !flash.custom);
+
+  el.distPoint.classList.toggle('hidden', S.distMode === 'range');
+  el.distRange.classList.toggle('hidden', S.distMode !== 'range');
+  el.distMode.querySelectorAll('button').forEach(b => {
+    const on = b.dataset.dm === S.distMode;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  if (document.activeElement !== el.dLoIn) el.dLoIn.value = String(S.dLo);
+  if (document.activeElement !== el.dHiIn) el.dHiIn.value = String(S.dHi);
 
   el.isoChips.value = String(S.iso);
   const rating = isoRating(S.iso);
@@ -536,6 +733,12 @@ function render(){
     ? `有效指数 ${gnParts.join(' ')} = ${num(gn)}`
     : `有效指数 ${num(gn)}`;
 
+  const ranged = S.distMode === 'range' && S.mode !== 'dist';
+  const lo = ranged ? S.dLo : S.d;
+  const hi = ranged ? S.dHi : S.d;
+  const list = SERIES[S.scale];
+  const gnFull = gnRef * Math.sqrt(S.iso / 100);
+
   if (S.mode === 'dist'){
     const d = distFor(gn, S.f);
     const b = bandFor(d, tol);
@@ -545,53 +748,114 @@ function render(){
     el.rsub.textContent = `${fStr(S.f)} · ${common}`;
     el.rband.innerHTML = `在 <b>${lenRange(b.min, b.max)}</b>之间都能用`;
     el.rformula.innerHTML = `${gnStep}<br>${num(gn)} ÷ ${S.f} = ${num(d, 1)} 米`;
+    el.ruler.innerHTML = rulerBandHTML({
+      lo: b.min / 1.35, hi: b.max * 1.35, band: b, mark: d, fmt: lenStr
+    });
   }
 
   if (S.mode === 'fnum'){
-    const fEx = fExactFor(gn, S.d);
-    const list = SERIES[S.scale];
-    // 求光圈模式下，答案永远是“最接近的可用档”，不沿用用户上次选的档
-    const fPick = nearestF(list, fEx);
-    const err = fErrStops(fEx, fPick);
-    const fb = fBandFor(fEx, tol);
-    el.rval.textContent = fStr(fPick); el.runit.textContent = '';
-    el.rval.className = 'txt';
-    el.rsub.textContent = `在 ${lenStr(S.d)} 处 · ${common}`;
-    el.rband.innerHTML = `光圈在 <b>${fStr(fb.min)} – ${fStr(fb.max)}</b> 之间都能用`;
-    el.rformula.innerHTML =
-      `${gnStep}<br>${num(gn)} ÷ ${num(S.d, 1)} = f/${num(fEx)} → 最近档 ${fStr(fPick)}` +
-      (Math.abs(err) >= 0.05 ? ` <span class="rerr">（${stopsStr(err)}）</span>` : '');
+    if (!ranged){
+      const fEx = fExactFor(gn, S.d);
+      const fPick = nearestF(list, fEx);
+      const err = fErrStops(fEx, fPick);
+      const fb = fBandFor(fEx, tol);
+      el.rval.textContent = fStr(fPick); el.runit.textContent = '';
+      el.rval.className = 'txt';
+      el.rsub.textContent = `在 ${lenStr(S.d)} 处 · ${common}`;
+      el.rband.innerHTML = `光圈在 <b>${fStr(fb.min)} – ${fStr(fb.max)}</b> 之间都能用`;
+      el.rformula.innerHTML =
+        `${gnStep}<br>${num(gn)} ÷ ${num(S.d, 1)} = f/${num(fEx)} → 最近档 ${fStr(fPick)}` +
+        (Math.abs(err) >= 0.05 ? ` <span class="rerr">（${stopsStr(err)}）</span>` : '');
+      el.ruler.innerHTML = rulerBandHTML({
+        lo: fb.min / 1.35, hi: fb.max * 1.35,
+        band: { min: fb.min, max: fb.max }, mark: fPick, fmt: fStr
+      });
+    } else {
+      const rec = recommendAperture(gn, lo, hi, tol, list);
+      const w = rec.window;
+      const band = w.valid
+        ? { min: w.min, max: w.max }
+        : { min: Math.min(w.min, w.max), max: Math.max(w.min, w.max) };
+      el.rval.textContent = fStr(rec.f); el.runit.textContent = '';
+      el.rval.className = 'txt';
+      el.rsub.textContent = `${lenRange(lo, hi)} · ${common}`;
+      el.rband.innerHTML = rec.spans
+        ? `整段 ${lenRange(lo, hi)} 都能曝对（近端 ${stopsStr(rec.errNear)} · 远端 ${stopsStr(rec.errFar)}）`
+        : `一档盖不住整段，差 <b>${rec.overflow.toFixed(1)} 档</b>。收窄范围，或者开大光圈。`;
+      el.rformula.innerHTML =
+        `${gnStep}<br>${num(gn)} ÷ ${num(lo, 1)} = f/${num(gn / lo)}` +
+        ` ｜ ÷ ${num(hi, 1)} = f/${num(gn / hi)} → 取 ${fStr(rec.f)}`;
+      el.ruler.innerHTML = rulerBandHTML({
+        lo: band.min / 1.35, hi: band.max * 1.35, band, mark: rec.f, fmt: fStr
+      });
+    }
   }
 
   if (S.mode === 'power'){
-    const p = powerFor(gnRef, S.iso, S.f, S.d);
-    const tooStrong = p.frac < 1 / 128;
-    const notEnough = p.frac > 1;
-    const idx = clamp(p.idx, 0, 21);
+    el.runit.textContent = '';
+    if (!ranged){
+      const p = powerFor(gnRef, S.iso, S.f, S.d);
+      const tooStrong = p.frac < 1 / 128;
+      const notEnough = p.frac > 1;
+      const idx = clamp(p.idx, 0, 21);
+      const cov = powerCover(gnFull, S.f, idx, tol);
 
-    if (notEnough){
-      const dMax = p.gnFull / Number(S.f);
-      el.rval.textContent = '不够'; el.runit.textContent = '';
-      el.rval.className = 'txt bad';
-      el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
-      el.rband.innerHTML = `全功率在这个光圈下只到 <b>${lenStr(dMax)}</b>。靠近、开大光圈，或换高感片。`;
-      el.rformula.innerHTML = `需要 GN ${num(p.gnReq)}，灯只有 ${num(p.gnFull)}`;
-    } else if (tooStrong){
-      el.rval.textContent = powerLabel(21); el.runit.textContent = '';
-      el.rval.className = 'txt bad';
-      el.rsub.textContent = `最低档仍偏亮 · ${fStr(S.f)} · ${lenStr(S.d)}`;
-      el.rband.innerHTML = `收到 1/128 还是过曝，还多 <b>${Math.abs(Math.log2(p.frac / POWERS[21])).toFixed(1)} 档</b>。收小光圈、加 ND，或者退远一点。`;
-      el.rformula.innerHTML = `需要功率 1/${num(1 / p.frac, 0)}，低于灯的 1/128`;
+      if (notEnough){
+        const dMax = p.gnFull / Number(S.f);
+        el.rval.textContent = '不够'; el.runit.textContent = '';
+        el.rval.className = 'txt bad';
+        el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
+        el.rband.innerHTML = `全功率在这个光圈下只到 <b>${lenStr(dMax)}</b>。靠近、开大光圈，或换高感片。`;
+        el.rformula.innerHTML = `需要 GN ${num(p.gnReq)}，灯只有 ${num(p.gnFull)}`;
+      } else if (tooStrong){
+        el.rval.textContent = powerLabel(21); el.runit.textContent = '';
+        el.rval.className = 'txt bad';
+        el.rsub.textContent = `最低档仍偏亮 · ${fStr(S.f)} · ${lenStr(S.d)}`;
+        el.rband.innerHTML = `收到 1/128 还是过曝，还多 <b>${Math.abs(Math.log2(p.frac / POWERS[21])).toFixed(1)} 档</b>。收小光圈、加 ND，或者退远一点。`;
+        el.rformula.innerHTML = `需要功率 1/${num(1 / p.frac, 0)}，低于灯的 1/128`;
+      } else {
+        const err = Math.log2(POWERS[idx] / p.frac);
+        el.rval.textContent = powerLabel(idx); el.runit.textContent = '';
+        el.rval.className = 'txt';
+        el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
+        el.rband.innerHTML = `需要 <b>1/${num(1 / p.frac, 1)}</b> 全功率` +
+          (Math.abs(err) >= 0.05 ? `，${powerDelta(err)}` : '，正好');
+        el.rformula.innerHTML =
+          `${fStr(S.f)} × ${num(S.d, 1)} 米 = GN ${num(p.gnReq)}<br>` +
+          `(${num(p.gnReq)} ÷ ${num(p.gnFull)})² = 1/${num(1 / p.frac, 1)} 全功率`;
+      }
+      el.ruler.innerHTML = rulerBandHTML({
+        lo: cov.min / 1.35, hi: cov.max * 1.35,
+        band: { min: cov.min, max: cov.max }, mark: cov.dFull, fmt: lenStr
+      });
     } else {
-      const err = Math.log2(POWERS[idx] / p.frac);
-      el.rval.textContent = powerLabel(idx); el.runit.textContent = '';
+      const rec = recommendPower(gnFull, S.f, lo, hi, tol);
+      const zones = powerZones(gnFull, S.f, lo, hi);
+      const dark = rec.k === 0 && rec.cover.dFull < lo;
+      const hot  = rec.k === 21 && rec.cover.dFull > hi;
+
+      el.rsub.textContent = `${fStr(S.f)} · ${lenRange(lo, hi)} · ${commonIso}`;
       el.rval.className = 'txt';
-      el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
-      el.rband.innerHTML = `需要 <b>1/${num(1 / p.frac, 1)}</b> 全功率` +
-        (Math.abs(err) >= 0.05 ? `，${powerDelta(err)}` : '，正好');
-      el.rformula.innerHTML =
-        `${fStr(S.f)} × ${num(S.d, 1)} 米 = GN ${num(p.gnReq)}<br>` +
-        `(${num(p.gnReq)} ÷ ${num(p.gnFull)})² = 1/${num(1 / p.frac, 1)} 全功率`;
+      if (dark){
+        el.rval.textContent = '不够';
+        el.rval.className = 'txt bad';
+        el.rband.innerHTML = `全功率只够到 <b>${lenStr(rec.cover.dFull)}</b>，近端还差 ${Math.abs(rec.errNear).toFixed(1)} 档。靠近、开大光圈，或换高感片。`;
+        el.rformula.innerHTML = `这一段需要 GN ${num(S.f * lo)} – ${num(S.f * hi)}，灯只有 ${num(gnFull)}`;
+      } else if (hot){
+        el.rval.textContent = powerLabel(21);
+        el.rval.className = 'txt bad';
+        el.rband.innerHTML = `收到 1/128 仍过曝，最远处还多 <b>${rec.errFar.toFixed(1)} 档</b>。收小光圈或加 ND。`;
+        el.rformula.innerHTML = `这一段需要 GN ${num(S.f * lo)} – ${num(S.f * hi)}`;
+      } else {
+        el.rval.textContent = powerLabel(rec.k);
+        el.rband.innerHTML = rec.spans
+          ? `整段都能曝对（近端 ${stopsStr(rec.errNear)} · 远端 ${stopsStr(rec.errFar)}）`
+          : `盖不住整段，最远差 <b>${rec.overflow.toFixed(1)} 档</b>。收窄范围，或者开大光圈。`;
+        el.rformula.innerHTML =
+          `需要 GN ${num(S.f * lo)} – ${num(S.f * hi)}（${num(lo, 1)}–${num(hi, 1)} 米 × ${fStr(S.f)}）<br>` +
+          `${powerLabel(rec.k)} 的准确距离是 ${num(rec.cover.dFull, 1)} 米`;
+      }
+      el.ruler.innerHTML = rulerZonesHTML({ lo, hi, zones, recK: rec.k, fmt: lenStr });
     }
   }
 
@@ -602,25 +866,38 @@ function render(){
 function renderTable(gn, gnRef, tol){
   const list = SERIES[S.scale];
   const isPower = S.mode === 'power';
+  const ranged = S.distMode === 'range' && S.mode !== 'dist';
+  const lo = ranged ? S.dLo : S.d;
+  const hi = ranged ? S.dHi : S.d;
+  const gnFull = gnRef * Math.sqrt(S.iso / 100);
+
   el.tblTitle.textContent = isPower
-    ? `在 ${lenStr(S.d)} 处，各光圈要多少功率`
+    ? (ranged ? `在 ${lenRange(lo, hi)} 内，各光圈要多少功率` : `在 ${lenStr(S.d)} 处，各光圈要多少功率`)
     : '换个光圈看看';
   el.th2.textContent = isPower ? '功率' : '距离';
-  el.th3.textContent = isPower ? '对应 GN' : '可用范围';
+  el.th3.textContent = isPower ? (ranged ? '盖住整段？' : '对应 GN') : '可用范围';
 
   let highlight = null;
   if (S.mode === 'dist' || isPower) highlight = Number(S.f);
   if (S.mode === 'fnum'){
-    const fEx = fExactFor(gn, S.d);
-    highlight = nearestF(list, fEx);
+    highlight = ranged
+      ? recommendAperture(gn, lo, hi, tol, list).f
+      : nearestF(list, fExactFor(gn, S.d));
   }
 
   const rows = list.map(f => {
     let c2, c3;
     if (isPower){
-      const p = powerFor(gnRef, S.iso, f, S.d);
-      c2 = p.frac > 1 ? '不够' : (p.frac < 1/128 ? '太强' : powerLabel(clamp(p.idx, 0, 21)));
-      c3 = 'GN ' + num(p.gnReq);
+      if (ranged){
+        const rec = recommendPower(gnFull, f, lo, hi, tol);
+        const dark = rec.k === 0 && rec.cover.dFull < lo;
+        c2 = dark ? '不够' : powerLabel(rec.k);
+        c3 = rec.spans ? '整段' : (dark ? '—' : `差 ${rec.overflow.toFixed(1)} 档`);
+      } else {
+        const p = powerFor(gnRef, S.iso, f, S.d);
+        c2 = p.frac > 1 ? '不够' : (p.frac < 1/128 ? '太强' : powerLabel(clamp(p.idx, 0, 21)));
+        c3 = 'GN ' + num(p.gnReq);
+      }
     } else {
       const d = distFor(gn, f);
       const b = bandFor(d, tol);
@@ -687,6 +964,28 @@ el.dIn.addEventListener('blur', () => { el.dIn.value = String(S.d); });
 el.dMinus.addEventListener('click', () => setDist(S.d - 0.1));
 el.dPlus.addEventListener('click', () => setDist(S.d + 0.1));
 
+/* 距离区间 */
+el.distMode.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  S.distMode = b.dataset.dm; save(); render();
+});
+
+function setRangeEnd(which, v){
+  v = clamp(Math.round(v * 10) / 10, 0.2, 60);
+  if (which === 'lo') S.dLo = Math.min(v, S.dHi);
+  else S.dHi = Math.max(v, S.dLo);
+  save(); render();
+}
+
+[['dLoIn', 'lo'], ['dHiIn', 'hi']].forEach(([id, which]) => {
+  el[id].addEventListener('input', e => {
+    const v = Number(e.target.value);
+    if (isFinite(v) && v > 0) setRangeEnd(which, v);
+  });
+  el[id].addEventListener('blur', () => { el[id].value = String(which === 'lo' ? S.dLo : S.dHi); });
+});
+
 /* 表格点一行 = 直接选这档光圈 */
 el.tbl.addEventListener('click', e => {
   const row = e.target.closest('.trow');
@@ -696,18 +995,26 @@ el.tbl.addEventListener('click', e => {
   save(); render();
 });
 
-/* 长按 − / + 连续调距离 */
-[['dMinus', -1], ['dPlus', 1]].forEach(([id, dir]) => {
-  const btn = el[id];
+/* 长按 − / + 连续调 */
+function holdRepeat(btn, step){
   let timer = null;
-  const start = () => {
-    if (timer) return;
-    timer = setInterval(() => setDist(S.d + dir * 0.1), 90);
-  };
+  const start = () => { if (timer) return; timer = setInterval(step, 90); };
   const stop = () => { clearInterval(timer); timer = null; };
   btn.addEventListener('pointerdown', start);
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
-});
+}
+
+holdRepeat(el.dMinus, () => setDist(S.d - 0.1));
+holdRepeat(el.dPlus, () => setDist(S.d + 0.1));
+holdRepeat(el.dLoMinus, () => setRangeEnd('lo', S.dLo - 0.1));
+holdRepeat(el.dLoPlus, () => setRangeEnd('lo', S.dLo + 0.1));
+holdRepeat(el.dHiMinus, () => setRangeEnd('hi', S.dHi - 0.1));
+holdRepeat(el.dHiPlus, () => setRangeEnd('hi', S.dHi + 0.1));
+
+el.dLoMinus.addEventListener('click', () => setRangeEnd('lo', S.dLo - 0.1));
+el.dLoPlus.addEventListener('click', () => setRangeEnd('lo', S.dLo + 0.1));
+el.dHiMinus.addEventListener('click', () => setRangeEnd('hi', S.dHi - 0.1));
+el.dHiPlus.addEventListener('click', () => setRangeEnd('hi', S.dHi + 0.1));
 
 /* ---------- 启动 ---------- */
 load();

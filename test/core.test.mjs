@@ -17,11 +17,13 @@ const end = html.lastIndexOf('/*', endMarker);
 const code = html.slice(begin, end);
 const core = new Function(code + `
   return { FLASHES, SERIES, TOL, POWERS, ISO_SERIES, ISO_STOPS, powerLabel, gnAt, distFor, fExactFor,
-           bandFor, fBandFor, distErrStops, fErrStops, nearestF, powerFor, isoRating };
+           bandFor, fBandFor, distErrStops, fErrStops, nearestF, powerFor, isoRating,
+           fRangeWindow, powerCover, zoneSpan, powerZones, recommendPower, recommendAperture };
 `)();
 
 const { FLASHES, SERIES, TOL, POWERS, ISO_SERIES, ISO_STOPS, powerLabel, gnAt, distFor, fExactFor,
-        bandFor, fBandFor, distErrStops, fErrStops, nearestF, powerFor, isoRating } = core;
+        bandFor, fBandFor, distErrStops, fErrStops, nearestF, powerFor, isoRating,
+        fRangeWindow, powerCover, zoneSpan, powerZones, recommendPower, recommendAperture } = core;
 
 const near = (a, b, eps = 1e-6, msg = '') =>
   assert.ok(Math.abs(a - b) < eps, `${msg} 期望 ${b}，实际 ${a}`);
@@ -230,4 +232,89 @@ test('闪光灯预设：指数与标称灯头焦距都写了', () => {
   assert.ok(FLASHES.some((f) => f.custom), '必须有自定义入口');
   const ids = FLASHES.map((f) => f.id);
   assert.equal(new Set(ids).size, ids.length, '型号 id 不能重复');
+});
+
+/* ---------------- 距离区间 ---------------- */
+
+test('区间光圈窗口：2–4 米、GN36、负片', () => {
+  const w = fRangeWindow(36, 2, 4, TOL.neg);
+  near(w.min, 9, 1e-9, '近端限制');
+  near(w.max, 36 * Math.SQRT2 / 4, 1e-9, '远端限制');
+  assert.ok(w.valid, '这个区间应该有解');
+  assert.ok(w.min < w.max);
+});
+
+test('区间光圈窗口：超出宽容度时无解', () => {
+  const w = fRangeWindow(36, 1, 8, TOL.neg);
+  assert.ok(w.min > w.max, '1–8 米跨度太大，任何一档都罩不住');
+  assert.equal(w.valid, false);
+});
+
+test('功率分区：连续覆盖整段，无空隙无重叠', () => {
+  const gnFull = 72, f = 5.6, lo = 2, hi = 4;
+  const zones = powerZones(gnFull, f, lo, hi);
+  assert.ok(zones.length >= 2, `应该切出多段，实际 ${zones.length}`);
+  near(zones[0].from, lo, 1e-9, '第一段从近端开始');
+  near(zones[zones.length - 1].to, hi, 1e-9, '最后一段到远端结束');
+  for (let i = 1; i < zones.length; i++){
+    near(zones[i].from, zones[i - 1].to, 1e-9, `第 ${i} 段和第 ${i - 1} 段之间有空隙`);
+    assert.ok(zones[i].k < zones[i - 1].k, '越远需要的功率越大，档位 k 应该越小');
+  }
+  for (const z of zones) assert.ok(z.to > z.from, '空段');
+});
+
+test('功率分区的边界与 zoneSpan 一致', () => {
+  const dFull = 12.857;
+  const s = zoneSpan(dFull, 5);
+  near(s.lo, dFull * Math.pow(2, -5.5 / 6), 1e-9);
+  near(s.hi, dFull * Math.pow(2, -4.5 / 6), 1e-9);
+});
+
+test('推荐功率：2–4 米整段能罩住', () => {
+  const rec = recommendPower(72, 5.6, 2, 4, TOL.neg);
+  assert.ok(rec, '应该给出推荐');
+  assert.equal(rec.idealCovers, true);
+  assert.ok(rec.spans, `推荐 ${powerLabel(rec.k)} 应该能罩住整段`);
+  assert.ok(rec.errNear <= TOL.neg.over + 1e-9, `近端 ${rec.errNear} 超出宽容度`);
+  assert.ok(rec.errFar >= -TOL.neg.under - 1e-9, `远端 ${rec.errFar} 超出宽容度`);
+  assert.ok(rec.overflow <= 1e-9, '罩住了就不该有溢出');
+});
+
+test('推荐功率：20–30 米全功率也不够', () => {
+  const rec = recommendPower(72, 5.6, 20, 30, TOL.neg);
+  assert.equal(rec.k, 0, '会被夹到全功率');
+  assert.ok(rec.cover.dFull < 20, '全功率的准确距离比近端还近');
+  assert.ok(rec.errNear < -0.1, '近端就已经欠曝');
+});
+
+test('推荐功率：ISO 翻 4 倍，档位低 6 档', () => {
+  const a = recommendPower(72, 5.6, 2, 4, TOL.neg);
+  const b = recommendPower(144, 5.6, 2, 4, TOL.neg);   // 指数 ×2 = 功率 ÷4 = 2 档
+  assert.equal(b.k, a.k + 6);
+  assert.ok(b.k <= 21, '不该被夹到最低档');
+});
+
+test('推荐光圈：2–4 米、GN36 → f/11', () => {
+  const rec = recommendAperture(36, 2, 4, TOL.neg, SERIES.half);
+  assert.equal(rec.f, 11);
+  assert.ok(rec.spans, `f/11 应该罩住整段，errNear=${rec.errNear} errFar=${rec.errFar}`);
+  assert.ok(Math.abs(rec.overflow) < 1e-9);
+});
+
+test('推荐光圈：跨度太大时报告缺口', () => {
+  const rec = recommendAperture(36, 1, 8, TOL.neg, SERIES.half);
+  assert.equal(rec.window.valid, false);
+  assert.ok(rec.overflow > 0, `跨度太大必须有缺口，实际 ${rec.overflow}`);
+  assert.equal(rec.spans, false);
+});
+
+test('区间内每一点都能被同一档功率覆盖', () => {
+  const gnFull = 72, f = 5.6, lo = 2, hi = 4;
+  const rec = recommendPower(gnFull, f, lo, hi, TOL.neg);
+  const cov = powerCover(gnFull, f, rec.k, TOL.neg);
+  for (let d = lo; d <= hi + 1e-9; d += 0.05){
+    const err = 2 * Math.log2(cov.dFull / d);
+    assert.ok(err <= TOL.neg.over + 1e-9 && err >= -TOL.neg.under - 1e-9,
+      `${d.toFixed(2)} 米处误差 ${err.toFixed(2)} 档超出负片宽容度`);
+  }
 });
