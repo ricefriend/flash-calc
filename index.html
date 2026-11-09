@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12100e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="闪光计算">
+<meta name="description" content="胶片机手动闪光计算器：指数、光圈、距离、功率，填二补一。">
+<title>闪光计算 · 胶片机手动闪光</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312100e'/%3E%3Cpath d='M36 8 18 36h12l-4 20 20-30H34z' fill='%23ffb347'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#12100e; --card:#1b1815; --card2:#242019; --line:#302b24;
+    --text:#f3eee5; --dim:#a29889; --faint:#7d7466;
+    --amber:#ffb347; --amber-deep:#3a2b16;
+    --red:#ff7a5c;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:var(--bg)}
+  body{
+    margin:0 auto; max-width:470px; color:var(--text);
+    background:var(--bg);
+    padding:calc(16px + env(safe-area-inset-top)) 14px calc(30px + env(safe-area-inset-bottom));
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%;
+  }
+  h1{font-size:19px;margin:0;letter-spacing:.02em}
+  .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .hd p{margin:3px 0 0;font-size:11.5px;color:var(--faint);letter-spacing:.06em}
+  .gnbadge{text-align:right;line-height:1.15;padding-top:2px}
+  .gnbadge small{display:block;font-size:10px;color:var(--faint);letter-spacing:.1em}
+  .gnbadge b{font-size:19px;color:var(--amber);font-variant-numeric:tabular-nums;font-weight:600}
+
+  .seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-top:14px}
+  .seg button{
+    flex:1;padding:10px 2px;border:0;border-radius:10px;background:transparent;
+    color:var(--dim);font:600 14px/1 inherit;font-family:inherit;cursor:pointer;
+    transition:background .15s,color .15s;
+  }
+  .seg button.on{background:var(--amber);color:#1a1206}
+  .hint{margin:9px 2px 0;font-size:12px;color:var(--faint)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-top:12px}
+  .result{background:linear-gradient(175deg,#241d13 0%,#1a1713 70%);border-color:#3b2f1c}
+  .rlabel{font-size:11px;letter-spacing:.12em;color:var(--faint)}
+  .rbig{display:flex;align-items:baseline;gap:7px;margin:5px 0 0;min-height:1em}
+  .rbig #rval{font-size:clamp(46px,14.5vw,64px);font-weight:700;line-height:1;letter-spacing:-.035em;color:var(--amber);font-variant-numeric:tabular-nums}
+  .rbig #rval.txt{font-size:clamp(34px,11vw,46px);letter-spacing:-.02em}
+  .rbig #rval.bad{color:var(--red)}
+  .rbig #runit{font-size:20px;color:var(--dim);font-weight:500}
+  .rsub{font-size:12.5px;color:var(--dim);margin-top:9px;letter-spacing:.01em}
+  .rband{font-size:14px;color:#e6d7b8;margin-top:9px;padding:8px 10px;background:#2b2214;border-radius:9px;line-height:1.45}
+  .rband b{color:var(--amber);font-weight:600;font-variant-numeric:tabular-nums}
+  .rformula{font-size:11.5px;color:var(--faint);margin-top:9px;font-variant-numeric:tabular-nums;line-height:1.65;overflow-wrap:anywhere}
+  .rerr{color:var(--red)}
+
+  .row{margin-top:14px}
+  .row:first-child{margin-top:0}
+  .lbl{font-size:11px;letter-spacing:.1em;color:var(--faint);margin-bottom:7px}
+  .note{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.5}
+
+  select,input[type=number]{
+    width:100%;appearance:none;-webkit-appearance:none;
+    background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;
+    padding:12px 34px 12px 13px;font:500 15px/1.2 inherit;font-family:inherit;
+  }
+  select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a29889' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 13px center;
+  }
+  input[type=number]{-moz-appearance:textfield;padding-right:13px;font-variant-numeric:tabular-nums}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+  .stepper{display:flex;align-items:center;gap:8px}
+  .stepper button{
+    width:46px;height:46px;flex:none;border-radius:12px;border:1px solid var(--line);
+    background:var(--card2);color:var(--text);font:500 22px/1 inherit;cursor:pointer;
+  }
+  .stepper button:active{background:#322b22}
+  .stepper .mid{flex:1;position:relative}
+  .stepper .mid input{text-align:center;padding:12px 40px 12px 42px}
+  .stepper .suffix{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--dim);pointer-events:none}
+
+  .tbl{max-height:302px;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;margin-top:2px;border-radius:10px}
+  .trow{display:grid;grid-template-columns:70px 1fr 1.15fr;gap:4px;align-items:center;padding:7px 8px;border-radius:8px;font-size:13px;color:#c6bdb0;font-variant-numeric:tabular-nums}
+  .trow.on{background:#2c2416;color:var(--text);box-shadow:inset 0 0 0 1px #4b3a1d}
+  .trow.on .c1{color:var(--amber);font-weight:600}
+  .thead{display:grid;grid-template-columns:70px 1fr 1.15fr;gap:4px;padding:0 8px 7px;font-size:10px;letter-spacing:.1em;color:var(--faint);background:var(--card)}
+  .c3{color:var(--faint);font-size:12px}
+  .trow.on .c3{color:#c9ab74}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 15px;margin-top:10px}
+  summary{padding:13px 0;font-size:14px;color:#ded5c7;cursor:pointer;list-style:none;outline:none}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";float:right;color:var(--faint);font-weight:400}
+  details[open] summary::after{content:"−"}
+  details .body{padding:0 0 15px;border-top:1px solid var(--line);margin-top:-1px;padding-top:12px}
+  details p{margin:0 0 10px;font-size:13.5px;line-height:1.68;color:#b3aaa0}
+  details p:last-child{margin-bottom:0}
+  details b{color:#e8dcc6;font-weight:600}
+  details code{background:#2a251e;padding:1px 5px;border-radius:5px;font-size:12.5px;color:#e0c893;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  details ol,details ul{margin:0 0 10px;padding-left:19px;font-size:13.5px;line-height:1.68;color:#b3aaa0}
+  details li{margin-bottom:5px}
+  footer{margin-top:18px;font-size:11px;color:#5f584d;line-height:1.7;text-align:center}
+  .hidden{display:none !important}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div>
+    <h1>闪光计算</h1>
+    <p>胶片机 · 手动闪光</p>
+  </div>
+  <div class="gnbadge"><small>有效指数</small><b id="gnOut">72</b></div>
+</div>
+
+<div class="seg" role="group" aria-label="计算模式">
+  <button data-mode="dist" class="on" aria-pressed="true">求距离</button>
+  <button data-mode="fnum" aria-pressed="false">求光圈</button>
+  <button data-mode="power" aria-pressed="false">求功率</button>
+</div>
+<p class="hint" id="hint">知道光圈，算能站多远。</p>
+
+<section class="card result">
+  <div class="rlabel" id="rlabel">准确距离</div>
+  <div class="rbig"><span id="rval">9.0</span><span id="runit">米</span></div>
+  <div class="rsub" id="rsub"></div>
+  <div class="rband" id="rband"></div>
+  <div class="rformula" id="rformula"></div>
+</section>
+
+<section class="card">
+  <div class="row">
+    <div class="lbl">胶片 ISO（按 1/3 档）</div>
+    <select id="isoSel"></select>
+    <div class="note" id="isoHint"></div>
+  </div>
+
+  <div class="row">
+    <div class="lbl">闪光灯</div>
+    <select id="flashSel"></select>
+    <div class="note" id="flashNote"></div>
+  </div>
+
+  <div class="row hidden" id="rowGn">
+    <div class="lbl">指数（ISO 100 全功率）</div>
+    <input type="number" id="gnIn" inputmode="decimal" min="1" max="200" step="1" value="36">
+  </div>
+
+  <div class="row" id="rowPower">
+    <div class="lbl">功率</div>
+    <select id="powerSel"></select>
+  </div>
+
+  <div class="row" id="rowF">
+    <div class="lbl">光圈</div>
+    <select id="fSel"></select>
+  </div>
+
+  <div class="row hidden" id="rowD">
+    <div class="lbl">到主体的距离</div>
+    <div class="stepper">
+      <button type="button" id="dMinus" aria-label="减小距离">−</button>
+      <div class="mid">
+        <input type="number" id="dIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="3">
+        <span class="suffix">米</span>
+      </div>
+      <button type="button" id="dPlus" aria-label="增大距离">+</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="lbl">宽容度（决定“能用”的范围）</div>
+    <select id="tolSel"></select>
+  </div>
+
+  <div class="row">
+    <div class="lbl">光圈刻度（你的镜头能拧到哪几档）</div>
+    <select id="scaleSel"></select>
+  </div>
+</section>
+
+<section class="card">
+  <div class="lbl" id="tblTitle">换个光圈看看</div>
+  <div class="thead"><div>光圈</div><div id="th2">距离</div><div id="th3">可用范围</div></div>
+  <div class="tbl" id="tbl"></div>
+</section>
+
+<details>
+  <summary>三个词就够用了</summary>
+  <div class="body">
+    <p><b>闪光指数（GN）</b>是厂商给的一个数：<code>GN = 光圈 × 距离</code>。TT350 标的是 36，指 ISO 100、105mm 灯头、全功率时，用 f/1 能照到 36 米——它只是把这条公式折成了一个数。</p>
+    <p><b>平方反比</b>：距离翻一倍，光少四倍，也就是暗两档。所以闪光的距离容差比你以为的宽松，也比你以为的陡峭——近了立刻过曝。</p>
+    <p><b>快门不参与</b>。闪光是瞬时的（几千分之一秒），快门开多久都只影响环境光。你的 Konica Auto S2 和 RB67 都是镜间快门，任何速度都能同步，这条对你基本不用管。</p>
+  </div>
+</details>
+
+<details>
+  <summary>灯背后那两个旋钮在调什么</summary>
+  <div class="body">
+    <p><b>功率</b>决定 GN。半功率不是 GN 减半，是 <code>GN × √0.5</code>：36 的灯开到 1/4 功率，指数是 18。这就是为什么工具里功率是“开平方”进去的。</p>
+    <p>功率按 1/3 档给（TT350 的手动档就是 1/3 档）。如果你的灯只能整档调，就近往上或往下取，最多差 1/6 档，负片看不出来。</p>
+    <p><b>灯头变焦</b>决定光的铺开面积。TT350 的 36 是在 105mm 时标的，灯头拨到 35mm 罩住更宽的视角，指数会掉下来。掉多少厂商没给全，所以这里不编——你按 105mm 用满、或者实测一次回来告诉我，我给你加一条校正。</p>
+    <p>柔光罩、跳闪（打天花板）、离机加柔光伞，都会再吃掉光。这些我先不算，因为吃多少取决于你怎么打——宁可按“直打”算完，再手动降一档。</p>
+  </div>
+</details>
+
+<details>
+  <summary>“可用范围”是怎么来的</summary>
+  <div class="body">
+    <p>不是猜的，是拿胶片的宽容度换算成距离。</p>
+    <p>彩色负片过曝两档基本看不出来，欠曝一档开始脏，所以我默认按 <b>+2 / −1 档</b>算：准确距离 9 米，可用范围就是 4.5 到 12.7 米。过曝的那一侧宽得多，这就是负片好用的原因。</p>
+    <p>反转片大约 ±1/2 档，数码约 ±1/3 档，切过去范围会立刻收窄。想卡到一分不差，选“严格”。</p>
+    <p>注意这是<b>曝光</b>的容差，不是构图的容差——人站得比 4.5 米近，脸就会白掉。</p>
+    <p>还有个更省事的做法：直接把卷按低一点拍。ISO 那栏选 160，就是“200 的卷过曝 1/3 档”；选 100 就是过曝一档。选对了，工具里的数字就是你要的曝光，不用再另外加补偿。</p>
+  </div>
+</details>
+
+<details>
+  <summary>装到 iPhone 上</summary>
+  <div class="body">
+    <p>Safari 打开这个页面 → 点底部“分享” → <b>添加到主屏幕</b>。之后就是一个独立图标，全屏、没有地址栏，跟 App 一样。</p>
+    <p>加载过一次之后断网也能用。所有计算都在这台手机上完成，不联网、不上传任何东西。</p>
+  </div>
+</details>
+
+<footer>
+  指数 36 = Godox TT350，ISO 100 / 105mm / 全功率。<br>
+  数字来自公式，不是经验值。拍之前先读一遍你的灯和镜头。
+</footer>
+
+<noscript><p style="color:#ff7a5c">这个工具需要 JavaScript。</p></noscript>
+
+<script>
+/* ============================================================
+   CORE:BEGIN  —— 纯计算，无 DOM。测试脚本会原样抽取这一段。
+   ============================================================ */
+
+/* 闪光灯预设：GN 一律指 ISO 100、全功率、厂商标称的那个灯头焦距（zoom 字段） */
+const FLASHES = [
+  { id:'tt350',  name:'Godox TT350',    gn:36, zoom:105 },
+  { id:'tt600',  name:'Godox TT600',    gn:60, zoom:105 },
+  { id:'v860ii', name:'Godox V860 II',  gn:60, zoom:105 },
+  { id:'580ex2', name:'Canon 580EX II', gn:58, zoom:105 },
+  { id:'430ex3', name:'Canon 430EX III',gn:43, zoom:105 },
+  { id:'sb800',  name:'Nikon SB-800',   gn:38, zoom:35 },
+  { id:'sb700',  name:'Nikon SB-700',   gn:28, zoom:35 },
+  { id:'v285hv', name:'Vivitar 285HV',  gn:37, zoom:35 },
+  { id:'custom', name:'自定义指数',      gn:36, zoom:0, custom:true }
+];
+
+/* 胶片 ISO：整档值，用来把 1/3 档的速度换算成“过曝/欠曝多少” */
+const ISO_STOPS = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400];
+/* 1/3 档梯度，25 到 6400 */
+const ISO_SERIES = [
+  25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800,
+  1000, 1250, 1600, 2000, 2500, 3200, 4000, 5000, 6400
+];
+
+/* 标准光圈序列（1/3 档表）*/
+const F_FULL  = [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32];
+const F_HALF  = [1, 1.2, 1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32];
+const F_THIRD = [1, 1.1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.5, 2.8, 3.2, 3.5, 4, 4.5, 5, 5.6, 6.3, 7.1, 8, 9, 10, 11, 13, 14, 16, 18, 20, 22, 25, 29, 32];
+const SERIES = { full:F_FULL, half:F_HALF, third:F_THIRD };
+
+/* 宽容度：over = 可接受的过曝档数，under = 可接受的欠曝档数 */
+const TOL = {
+  neg:   { label:'彩色负片（+2 / −1）', over:2,    under:1 },
+  slide: { label:'反转片（±1/2）',      over:0.5,  under:0.5 },
+  digi:  { label:'数码（±1/3）',        over:1/3,  under:1/3 },
+  strict:{ label:'严格（0）',           over:0,    under:0 }
+};
+
+/* 功率档：1/1 起，每 1/3 档一档，到 1/128 共 21 个 1/3 档 */
+const POWERS = Array.from({ length:22 }, (_, k) => Math.pow(2, -k/3));
+
+/* 按闪光灯 LCD 的写法标功率：整档 + 1/3 档偏移，例如「1/8 −0.3」 */
+function powerLabel(k){
+  if (k <= 0) return '1/1';
+  const base = Math.floor(k / 3);
+  const rest = k % 3;
+  const head = '1/' + Math.pow(2, base);
+  if (rest === 0) return head;
+  return head + (rest === 1 ? ' −0.3' : ' −0.7');
+}
+
+/* 把 ISO 和功率折算进指数 */
+function gnAt(gnRef, iso, power){
+  return gnRef * Math.sqrt(iso / 100) * Math.sqrt(power);
+}
+
+/* 指数 + 光圈 → 距离 */
+function distFor(gn, f){ return gn / f; }
+
+/* 指数 + 距离 → 需要的光圈（精确值） */
+function fExactFor(gn, d){ return gn / d; }
+
+/* 曝光容差换算成距离区间；d 为准确距离 */
+function bandFor(d, tol){
+  return {
+    exact: d,
+    min: d / Math.pow(2, tol.over / 2),   // 更近 = 更亮 = 过曝
+    max: d * Math.pow(2, tol.under / 2)   // 更远 = 更暗 = 欠曝
+  };
+}
+
+/* 光圈容差区间 */
+function fBandFor(f, tol){
+  return {
+    exact: f,
+    min: f / Math.pow(2, tol.over / 2),
+    max: f * Math.pow(2, tol.under / 2)
+  };
+}
+
+/* 距离误差（档）：正 = 过曝 */
+function distErrStops(dExact, dActual){
+  return 2 * Math.log2(dExact / dActual);
+}
+
+/* 光圈误差（档）：正 = 过曝 */
+function fErrStops(fExact, fActual){
+  return 2 * Math.log2(fExact / fActual);
+}
+
+/* 在给定序列里找最接近的档位（按档数距离，不是线性距离）*/
+function nearestF(list, val){
+  let best = list[0], bd = Infinity;
+  for (const f of list){
+    const d = Math.abs(Math.log2(f / val));
+    if (d < bd){ bd = d; best = f; }
+  }
+  return best;
+}
+
+/* 光圈 + 距离 → 需要的功率 */
+function powerFor(gnRef, iso, f, d){
+  const gnFull = gnRef * Math.sqrt(iso / 100);
+  const gnReq  = f * d;
+  const frac   = Math.pow(gnReq / gnFull, 2);   // 需要的功率占全功率的比例
+  const idx    = Math.round(-3 * Math.log2(frac)); // 最近的 1/3 档
+  return { gnFull, gnReq, frac, idx };
+}
+
+/* 把 1/3 档的 ISO 读出人话：这是把多少的卷过曝/欠曝了多少 */
+function isoRating(iso){
+  let base = ISO_STOPS[0], bd = Infinity;
+  for (const b of ISO_STOPS){
+    const d = Math.abs(Math.log2(iso / b));
+    if (d < bd){ bd = d; base = b; }
+  }
+  const stops = Math.log2(base / iso);           // 正 = 过曝
+  if (Math.abs(stops) < 0.01) return null;
+  const thirds = Math.round(Math.abs(stops) * 3);
+  const amount = thirds >= 3 ? (thirds / 3) + ' 档' : thirds + '/3 档';
+  return { base, stops, text: `相当于把 ${base} 的卷${stops > 0 ? '过曝' : '欠曝'} ${amount}` };
+}
+/* ============================================================
+   CORE:END
+   ============================================================ */
+
+/* ---------- 状态 ---------- */
+const KEY = 'flashcalc.v1';
+const S = {
+  mode:'dist', iso:400, flash:'tt350', gn:36,
+  power:6, f:5.6, d:3.0, scale:'half', tol:'neg'
+};
+
+function clamp(n, lo, hi){ return Math.min(hi, Math.max(lo, n)); }
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    for (const k of Object.keys(S)){
+      if (o[k] !== undefined && o[k] !== null) S[k] = o[k];
+    }
+    S.iso   = clamp(Number(S.iso) || 400, 25, 6400);
+    if (!ISO_SERIES.includes(S.iso)){
+      S.iso = ISO_SERIES.reduce((a, b) => Math.abs(Math.log2(b / S.iso)) < Math.abs(Math.log2(a / S.iso)) ? b : a);
+    }
+    S.gn    = clamp(Number(S.gn) || 36, 1, 200);
+    S.d     = clamp(Number(S.d) || 3, 0.2, 60);
+    S.f     = Number(S.f) || 8;
+    S.power = clamp(Math.round(Number(S.power) || 0), 0, 21);
+    if (!['dist','fnum','power'].includes(S.mode)) S.mode = 'dist';
+    if (!SERIES[S.scale]) S.scale = 'half';
+    if (!TOL[S.tol]) S.tol = 'neg';
+    if (!FLASHES.some(x => x.id === S.flash)) S.flash = 'tt350';
+  }catch(e){ /* 隐私模式 / file:// 受限，忽略 */ }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+}
+
+/* ---------- 格式化 ---------- */
+/* 去掉多余的小数尾巴：72.0 → 72，24.03 → 24 */
+function num(x, d = 1){
+  if (!isFinite(x)) return '—';
+  return String(Math.round(x * Math.pow(10, d)) / Math.pow(10, d));
+}
+function len(m){
+  if (!isFinite(m) || m <= 0) return { v:'—', u:'' };
+  if (m < 1)  return { v:String(Math.round(m * 100)), u:'厘米' };
+  if (m < 10) return { v:m.toFixed(1), u:'米' };
+  return { v:String(Math.round(m)), u:'米' };
+}
+function lenStr(m){ const x = len(m); return x.v + x.u; }
+/* 区间写法：3.2 – 9.1 米（单位只出现在最后） */
+function lenRange(a, b){
+  if (a < 1 && b < 1) return Math.round(a * 100) + ' – ' + Math.round(b * 100) + ' 厘米';
+  const f = m => m < 10 ? String(Math.round(m * 10) / 10) : String(Math.round(m));
+  return f(a) + ' – ' + f(b) + ' 米';
+}
+function stopsStr(x){
+  const r = Math.round(x * 10) / 10;
+  if (Math.abs(r) < 0.05) return '0 档';
+  return (r > 0 ? '+' : '−') + Math.abs(r).toFixed(1) + ' 档';
+}
+/* 功率档位的偏差说人话：这是选档造成的亮度差 */
+function powerDelta(x){
+  const r = Math.round(x * 10) / 10;
+  if (Math.abs(r) < 0.05) return '正好';
+  return (r > 0 ? '比理想亮 ' : '比理想暗 ') + Math.abs(r).toFixed(1) + ' 档';
+}
+function fStr(f){
+  return 'f/' + (f < 10 ? (Math.round(f * 10) / 10).toString() : String(Math.round(f)));
+}
+
+/* ---------- DOM ---------- */
+const $ = id => document.getElementById(id);
+const el = {
+  gnOut:$('gnOut'), hint:$('hint'),
+  rlabel:$('rlabel'), rval:$('rval'), runit:$('runit'),
+  rsub:$('rsub'), rband:$('rband'), rformula:$('rformula'),
+  isoChips:$('isoSel'), isoHint:$('isoHint'), flashSel:$('flashSel'), flashNote:$('flashNote'),
+  rowGn:$('rowGn'), gnIn:$('gnIn'),
+  powerSel:$('powerSel'), rowPower:$('rowPower'),
+  fSel:$('fSel'), rowF:$('rowF'),
+  dIn:$('dIn'), rowD:$('rowD'), dMinus:$('dMinus'), dPlus:$('dPlus'),
+  tolSel:$('tolSel'), scaleSel:$('scaleSel'),
+  tbl:$('tbl'), tblTitle:$('tblTitle'), th2:$('th2'), th3:$('th3')
+};
+
+const ISO_LIST = ISO_SERIES;
+const MODE_HINT = {
+  dist:'知道光圈，算能站多远。',
+  fnum:'站定了位置，算该开多大光圈。',
+  power:'光圈和距离都定了，算灯该调到几档。'
+};
+const MODE_LABEL = { dist:'准确距离', fnum:'建议光圈', power:'建议功率' };
+
+let lastHighlight = null;
+
+/* ---------- 构建控件 ---------- */
+function flashLabel(f){
+  return f.custom ? f.name : `${f.name} · GN ${f.gn}@${f.zoom}mm`;
+}
+
+function buildControls(){
+  el.isoChips.innerHTML = ISO_LIST
+    .map(v => `<option value="${v}">${v}</option>`).join('');
+
+  el.flashSel.innerHTML = FLASHES
+    .map(f => `<option value="${f.id}">${flashLabel(f)}</option>`).join('');
+
+  el.powerSel.innerHTML = POWERS
+    .map((_, k) => `<option value="${k}">${powerLabel(k)}</option>`).join('');
+
+  el.tolSel.innerHTML = Object.keys(TOL)
+    .map(k => `<option value="${k}">${TOL[k].label}</option>`).join('');
+
+  el.scaleSel.innerHTML = [
+    ['full','整档（1、1.4、2、2.8…）'],
+    ['half','半档（1.2、1.7、2.4…）'],
+    ['third','1/3 档（1.1、1.6、1.8…）']
+  ].map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+}
+
+function fillApertures(){
+  const list = SERIES[S.scale];
+  el.fSel.innerHTML = list
+    .map(f => `<option value="${f}">${fStr(f)}</option>`).join('');
+  if (!list.includes(Number(S.f))){
+    el.fSel.insertAdjacentHTML('beforeend', `<option value="${S.f}">${fStr(S.f)}</option>`);
+  }
+  el.fSel.value = String(S.f);
+}
+
+/* ---------- 主渲染 ---------- */
+function render(){
+  const flash = FLASHES.find(x => x.id === S.flash) || FLASHES[0];
+  const gnRef = flash.custom ? Number(S.gn) : flash.gn;
+  const tol = TOL[S.tol];
+  const power = POWERS[S.power];
+  const gn = gnAt(gnRef, S.iso, power);
+
+  el.gnOut.textContent = gn.toFixed(gn < 20 ? 1 : 0);
+  el.hint.textContent = MODE_HINT[S.mode];
+  el.rlabel.textContent = MODE_LABEL[S.mode];
+
+  document.querySelectorAll('.seg button').forEach(b => {
+    const on = b.dataset.mode === S.mode;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+
+  el.rowPower.classList.toggle('hidden', S.mode === 'power');
+  el.rowF.classList.toggle('hidden', S.mode === 'fnum');
+  el.rowD.classList.toggle('hidden', S.mode === 'dist');
+  el.rowGn.classList.toggle('hidden', !flash.custom);
+
+  el.isoChips.value = String(S.iso);
+  const rating = isoRating(S.iso);
+  el.isoHint.textContent = rating ? rating.text : '';
+  el.isoHint.classList.toggle('hidden', !rating);
+
+  el.flashSel.value = S.flash;
+  el.flashNote.textContent = flash.custom
+    ? '填说明书上的指数：ISO 100、全功率、标称灯头焦距下的那个数。'
+    : `标称条件：ISO 100 · ${flash.zoom}mm 灯头 · 全功率` +
+      (flash.zoom >= 85 ? '。灯头往广角拨，指数会明显往下掉。' : '。');
+
+  el.powerSel.value = String(S.power);
+  el.tolSel.value = S.tol;
+  el.scaleSel.value = S.scale;
+  if (flash.custom) el.gnIn.value = String(S.gn);
+  if (document.activeElement !== el.dIn) el.dIn.value = String(S.d);
+
+  const flashName = flash.name;
+  const common = `${powerLabel(S.power)} · ISO ${S.iso} · ${flashName}`;
+  const commonIso = `ISO ${S.iso} · ${flashName}`;
+  const gnParts = [String(gnRef)];
+  if (S.iso !== 100) gnParts.push(`× √(${S.iso}/100)`);
+  if (S.power !== 0) gnParts.push(`× ${num(Math.sqrt(power), 2)}`);
+  const gnStep = gnParts.length > 1
+    ? `有效指数 ${gnParts.join(' ')} = ${num(gn)}`
+    : `有效指数 ${num(gn)}`;
+
+  if (S.mode === 'dist'){
+    const d = distFor(gn, S.f);
+    const b = bandFor(d, tol);
+    const L = len(d);
+    el.rval.textContent = L.v; el.runit.textContent = L.u;
+    el.rval.className = '';
+    el.rsub.textContent = `${fStr(S.f)} · ${common}`;
+    el.rband.innerHTML = `在 <b>${lenRange(b.min, b.max)}</b>之间都能用`;
+    el.rformula.innerHTML = `${gnStep}<br>${num(gn)} ÷ ${S.f} = ${num(d, 1)} 米`;
+  }
+
+  if (S.mode === 'fnum'){
+    const fEx = fExactFor(gn, S.d);
+    const list = SERIES[S.scale];
+    // 求光圈模式下，答案永远是“最接近的可用档”，不沿用用户上次选的档
+    const fPick = nearestF(list, fEx);
+    const err = fErrStops(fEx, fPick);
+    const fb = fBandFor(fEx, tol);
+    el.rval.textContent = fStr(fPick); el.runit.textContent = '';
+    el.rval.className = 'txt';
+    el.rsub.textContent = `在 ${lenStr(S.d)} 处 · ${common}`;
+    el.rband.innerHTML = `光圈在 <b>${fStr(fb.min)} – ${fStr(fb.max)}</b> 之间都能用`;
+    el.rformula.innerHTML =
+      `${gnStep}<br>${num(gn)} ÷ ${num(S.d, 1)} = f/${num(fEx)} → 最近档 ${fStr(fPick)}` +
+      (Math.abs(err) >= 0.05 ? ` <span class="rerr">（${stopsStr(err)}）</span>` : '');
+  }
+
+  if (S.mode === 'power'){
+    const p = powerFor(gnRef, S.iso, S.f, S.d);
+    const tooStrong = p.frac < 1 / 128;
+    const notEnough = p.frac > 1;
+    const idx = clamp(p.idx, 0, 21);
+
+    if (notEnough){
+      const dMax = p.gnFull / Number(S.f);
+      el.rval.textContent = '不够'; el.runit.textContent = '';
+      el.rval.className = 'txt bad';
+      el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
+      el.rband.innerHTML = `全功率在这个光圈下只到 <b>${lenStr(dMax)}</b>。靠近、开大光圈，或换高感片。`;
+      el.rformula.innerHTML = `需要 GN ${num(p.gnReq)}，灯只有 ${num(p.gnFull)}`;
+    } else if (tooStrong){
+      el.rval.textContent = powerLabel(21); el.runit.textContent = '';
+      el.rval.className = 'txt bad';
+      el.rsub.textContent = `最低档仍偏亮 · ${fStr(S.f)} · ${lenStr(S.d)}`;
+      el.rband.innerHTML = `收到 1/128 还是过曝，还多 <b>${Math.abs(Math.log2(p.frac / POWERS[21])).toFixed(1)} 档</b>。收小光圈、加 ND，或者退远一点。`;
+      el.rformula.innerHTML = `需要功率 1/${num(1 / p.frac, 0)}，低于灯的 1/128`;
+    } else {
+      const err = Math.log2(POWERS[idx] / p.frac);
+      el.rval.textContent = powerLabel(idx); el.runit.textContent = '';
+      el.rval.className = 'txt';
+      el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
+      el.rband.innerHTML = `需要 <b>1/${num(1 / p.frac, 1)}</b> 全功率` +
+        (Math.abs(err) >= 0.05 ? `，${powerDelta(err)}` : '，正好');
+      el.rformula.innerHTML =
+        `${fStr(S.f)} × ${num(S.d, 1)} 米 = GN ${num(p.gnReq)}<br>` +
+        `(${num(p.gnReq)} ÷ ${num(p.gnFull)})² = 1/${num(1 / p.frac, 1)} 全功率`;
+    }
+  }
+
+  renderTable(gn, gnRef, tol);
+}
+
+/* ---------- 对照表 ---------- */
+function renderTable(gn, gnRef, tol){
+  const list = SERIES[S.scale];
+  const isPower = S.mode === 'power';
+  el.tblTitle.textContent = isPower
+    ? `在 ${lenStr(S.d)} 处，各光圈要多少功率`
+    : '换个光圈看看';
+  el.th2.textContent = isPower ? '功率' : '距离';
+  el.th3.textContent = isPower ? '对应 GN' : '可用范围';
+
+  let highlight = null;
+  if (S.mode === 'dist' || isPower) highlight = Number(S.f);
+  if (S.mode === 'fnum'){
+    const fEx = fExactFor(gn, S.d);
+    highlight = nearestF(list, fEx);
+  }
+
+  const rows = list.map(f => {
+    let c2, c3;
+    if (isPower){
+      const p = powerFor(gnRef, S.iso, f, S.d);
+      c2 = p.frac > 1 ? '不够' : (p.frac < 1/128 ? '太强' : powerLabel(clamp(p.idx, 0, 21)));
+      c3 = 'GN ' + num(p.gnReq);
+    } else {
+      const d = distFor(gn, f);
+      const b = bandFor(d, tol);
+      c2 = lenStr(d);
+      c3 = lenRange(b.min, b.max);
+    }
+    const on = f === highlight ? ' on' : '';
+    return `<div class="trow${on}" data-f="${f}"><div class="c1">${fStr(f)}</div><div class="c2">${c2}</div><div class="c3">${c3}</div></div>`;
+  }).join('');
+
+  el.tbl.innerHTML = rows;
+
+  if (highlight !== null && highlight !== lastHighlight){
+    const node = el.tbl.querySelector('.trow.on');
+    if (node) el.tbl.scrollTop = Math.max(0, node.offsetTop - el.tbl.clientHeight / 2 + 12);
+  }
+  lastHighlight = highlight;
+}
+
+/* ---------- 事件 ---------- */
+function setMode(m){ S.mode = m; save(); render(); }
+
+document.querySelectorAll('.seg button').forEach(b => {
+  b.addEventListener('click', () => setMode(b.dataset.mode));
+});
+
+el.isoChips.addEventListener('change', e => {
+  S.iso = Number(e.target.value); save(); render();
+});
+
+el.flashSel.addEventListener('change', e => {
+  S.flash = e.target.value;
+  const f = FLASHES.find(x => x.id === S.flash);
+  if (f && !f.custom) S.gn = f.gn;
+  save(); render();
+});
+
+el.gnIn.addEventListener('input', e => {
+  S.gn = clamp(Number(e.target.value) || 36, 1, 200); save(); render();
+});
+
+el.powerSel.addEventListener('change', e => { S.power = Number(e.target.value); save(); render(); });
+
+el.fSel.addEventListener('change', e => { S.f = Number(e.target.value); save(); render(); });
+
+el.tolSel.addEventListener('change', e => { S.tol = e.target.value; save(); render(); });
+
+el.scaleSel.addEventListener('change', e => {
+  S.scale = e.target.value;
+  fillApertures();
+  save(); render();
+});
+
+function setDist(v){
+  S.d = clamp(Math.round(v * 10) / 10, 0.2, 60);
+  el.dIn.value = String(S.d);
+  save(); render();
+}
+el.dIn.addEventListener('input', e => {
+  const v = Number(e.target.value);
+  if (isFinite(v) && v > 0){ S.d = clamp(v, 0.2, 60); save(); render(); }
+});
+el.dIn.addEventListener('blur', () => { el.dIn.value = String(S.d); });
+el.dMinus.addEventListener('click', () => setDist(S.d - 0.1));
+el.dPlus.addEventListener('click', () => setDist(S.d + 0.1));
+
+/* 表格点一行 = 直接选这档光圈 */
+el.tbl.addEventListener('click', e => {
+  const row = e.target.closest('.trow');
+  if (!row) return;
+  if (S.mode === 'fnum') return;  // 求光圈时答案已定，点表格不改变任何东西
+  S.f = Number(row.dataset.f);
+  save(); render();
+});
+
+/* 长按 − / + 连续调距离 */
+[['dMinus', -1], ['dPlus', 1]].forEach(([id, dir]) => {
+  const btn = el[id];
+  let timer = null;
+  const start = () => {
+    if (timer) return;
+    timer = setInterval(() => setDist(S.d + dir * 0.1), 90);
+  };
+  const stop = () => { clearInterval(timer); timer = null; };
+  btn.addEventListener('pointerdown', start);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
+});
+
+/* ---------- 启动 ---------- */
+load();
+buildControls();
+fillApertures();
+render();
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
