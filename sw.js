@@ -1,4 +1,4 @@
-const CACHE = 'flashcalc-v2';
+const CACHE = 'flashcalc-v3';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', (e) => {

@@ -1,1032 +1,2213 @@
-<!doctype html>
-<html lang="zh-CN">
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#12100e">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="闪光计算">
-<meta name="description" content="胶片机手动闪光计算器：指数、光圈、距离、功率，填二补一。">
-<title>闪光计算 · 胶片机手动闪光</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312100e'/%3E%3Cpath d='M36 8 18 36h12l-4 20 20-30H34z' fill='%23ffb347'/%3E%3C/svg%3E">
-<style>
-  :root{
-    --bg:#12100e; --card:#1b1815; --card2:#242019; --line:#302b24;
-    --text:#f3eee5; --dim:#a29889; --faint:#7d7466;
-    --amber:#ffb347; --amber-deep:#3a2b16;
-    --red:#ff7a5c;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html{background:var(--bg)}
-  body{
-    margin:0 auto; max-width:470px; color:var(--text);
-    background:var(--bg);
-    padding:calc(16px + env(safe-area-inset-top)) 14px calc(30px + env(safe-area-inset-bottom));
-    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Helvetica Neue",Arial,sans-serif;
-    -webkit-font-smoothing:antialiased;
-    -webkit-text-size-adjust:100%;
-  }
-  h1{font-size:19px;margin:0;letter-spacing:.02em}
-  .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-  .hd p{margin:3px 0 0;font-size:11.5px;color:var(--faint);letter-spacing:.06em}
-  .gnbadge{text-align:right;line-height:1.15;padding-top:2px}
-  .gnbadge small{display:block;font-size:10px;color:var(--faint);letter-spacing:.1em}
-  .gnbadge b{font-size:19px;color:var(--amber);font-variant-numeric:tabular-nums;font-weight:600}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="胶片闪光表" />
+  <meta name="theme-color" content="#F4F2ED" id="metaThemeColor" />
+  <title>胶片闪光测光表 · 手动闪光计算器</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111214'/%3E%3Cpath d='M36 8 18 36h12l-4 20 20-30H34z' fill='%23FF7A2F'/%3E%3C/svg%3E" />
+  <style>
+    /* 默认：普通模式（日间浅色纸感配色） */
+    :root,
+    html[data-theme="light"] {
+      --bg: #F4F2ED;
+      --header-bg: rgba(244, 242, 237, 0.92);
+      --tab-bg: rgba(255, 255, 255, 0.94);
+      --surface: #FFFFFF;
+      --surface-2: #ECE8DF;
+      --input-bg: #F7F5F0;
+      --border: #DDD7CB;
+      --border-2: #CEC7B8;
+      --text: #18191C;
+      --text-2: #363940;
+      --text-sub: #60646E;
+      --text-dim: #858992;
+      --amber: #D95814;
+      --amber-light: #C24808;
+      --amber-ink: #FFFFFF;
+      --amber-bg: rgba(217, 88, 20, 0.11);
+      --amber-border: rgba(217, 88, 20, 0.34);
+      --green: #118252;
+      --green-bg: rgba(17, 130, 82, 0.11);
+      --green-border: rgba(17, 130, 82, 0.28);
+      --warn: #A86C00;
+      --warn-text: #8F5A00;
+      --warn-bg: rgba(184, 122, 0, 0.11);
+      --warn-border: rgba(184, 122, 0, 0.30);
+      --danger: #D13434;
+      --danger-bg: rgba(209, 52, 52, 0.10);
+      --meter-bg: linear-gradient(160deg, #FFFFFF 0%, #F7F4EC 100%);
+      --meter-border: #D5CFC2;
+      --meter-shadow: 0 8px 22px rgba(24, 25, 28, 0.06);
+      --meter-value: #18191C;
+      --meter-sub-bg: rgba(236, 232, 223, 0.65);
+      --meter-sub-border: #DDD7CB;
+      --track-bg: #E8E3D9;
+      --track-border: #D2CCC0;
+      --zone-bg: linear-gradient(180deg, rgba(217, 88, 20, 0.36), rgba(217, 88, 20, 0.14));
+      --zone-border: rgba(217, 88, 20, 0.65);
+      --pin-color: #18191C;
+      --pin-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 6px rgba(0, 0, 0, 0.28);
+      --toast-bg: rgba(24, 25, 28, 0.92);
+      --toast-text: #FFFFFF;
+      --mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+    }
 
-  .seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-top:14px}
-  .seg button{
-    flex:1;padding:10px 2px;border:0;border-radius:10px;background:transparent;
-    color:var(--dim);font:600 14px/1 inherit;font-family:inherit;cursor:pointer;
-    transition:background .15s,color .15s;
-  }
-  .seg button.on{background:var(--amber);color:#1a1206}
-  .hint{margin:9px 2px 0;font-size:12px;color:var(--faint)}
+    /* 暗色模式（深灰橙暗房配色） */
+    html[data-theme="dark"] {
+      --bg: #111214;
+      --header-bg: rgba(17, 18, 20, 0.92);
+      --tab-bg: rgba(21, 23, 27, 0.94);
+      --surface: #1A1C20;
+      --surface-2: #23262C;
+      --input-bg: #131518;
+      --border: #2A2D34;
+      --border-2: #32363F;
+      --text: #F2F4F8;
+      --text-2: #E3E7EF;
+      --text-sub: #8A8F98;
+      --text-dim: #666C76;
+      --amber: #FF7A2F;
+      --amber-light: #FF9457;
+      --amber-ink: #111214;
+      --amber-bg: rgba(255, 122, 47, 0.16);
+      --amber-border: rgba(255, 122, 47, 0.38);
+      --green: #3DDC97;
+      --green-bg: rgba(61, 220, 151, 0.14);
+      --green-border: rgba(61, 220, 151, 0.34);
+      --warn: #F4B942;
+      --warn-text: #F5C96B;
+      --warn-bg: rgba(244, 185, 66, 0.13);
+      --warn-border: rgba(244, 185, 66, 0.35);
+      --danger: #FF7A7A;
+      --danger-bg: rgba(255, 92, 92, 0.13);
+      --meter-bg: linear-gradient(160deg, #1F2229 0%, #15171B 100%);
+      --meter-border: #343842;
+      --meter-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      --meter-value: #FFFFFF;
+      --meter-sub-bg: rgba(17, 18, 20, 0.58);
+      --meter-sub-border: #272A31;
+      --track-bg: #121418;
+      --track-border: #2B2F38;
+      --zone-bg: linear-gradient(180deg, rgba(255, 122, 47, 0.45), rgba(255, 122, 47, 0.16));
+      --zone-border: rgba(255, 148, 87, 0.7);
+      --pin-color: #FFFFFF;
+      --pin-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.65);
+      --toast-bg: rgba(32, 35, 41, 0.96);
+      --toast-text: #FFFFFF;
+    }
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-top:12px}
-  .result{background:linear-gradient(175deg,#241d13 0%,#1a1713 70%);border-color:#3b2f1c}
-  .rlabel{font-size:11px;letter-spacing:.12em;color:var(--faint)}
-  .rbig{display:flex;align-items:baseline;gap:7px;margin:5px 0 0;min-height:1em}
-  .rbig #rval{font-size:clamp(46px,14.5vw,64px);font-weight:700;line-height:1;letter-spacing:-.035em;color:var(--amber);font-variant-numeric:tabular-nums}
-  .rbig #rval.txt{font-size:clamp(34px,11vw,46px);letter-spacing:-.02em}
-  .rbig #rval.bad{color:var(--red)}
-  .rbig #runit{font-size:20px;color:var(--dim);font-weight:500}
-  .rsub{font-size:12.5px;color:var(--dim);margin-top:9px;letter-spacing:.01em}
-  .rband{font-size:14px;color:#e6d7b8;margin-top:9px;padding:8px 10px;background:#2b2214;border-radius:9px;line-height:1.45}
-  .rband b{color:var(--amber);font-weight:600;font-variant-numeric:tabular-nums}
-  .rformula{font-size:11.5px;color:var(--faint);margin-top:9px;font-variant-numeric:tabular-nums;line-height:1.65;overflow-wrap:anywhere}
-  .rerr{color:var(--red)}
+    /* 暖棕经典（原仓库暖棕琥珀配色） */
+    html[data-theme="warm"] {
+      --bg: #12100E;
+      --header-bg: rgba(18, 16, 14, 0.92);
+      --tab-bg: rgba(24, 21, 18, 0.94);
+      --surface: #1B1815;
+      --surface-2: #242019;
+      --input-bg: #15120F;
+      --border: #302B24;
+      --border-2: #3D352B;
+      --text: #F3EEE5;
+      --text-2: #E6D7B8;
+      --text-sub: #A29889;
+      --text-dim: #7D7466;
+      --amber: #FFB347;
+      --amber-light: #FFB347;
+      --amber-ink: #1A1206;
+      --amber-bg: rgba(255, 179, 71, 0.16);
+      --amber-border: rgba(255, 179, 71, 0.38);
+      --green: #4ADE80;
+      --green-bg: rgba(74, 222, 128, 0.14);
+      --green-border: rgba(74, 222, 128, 0.32);
+      --warn: #FFB347;
+      --warn-text: #F6CA83;
+      --warn-bg: rgba(255, 179, 71, 0.13);
+      --warn-border: rgba(255, 179, 71, 0.35);
+      --danger: #FF7A5C;
+      --danger-bg: rgba(255, 122, 92, 0.14);
+      --meter-bg: linear-gradient(175deg, #241D13 0%, #1A1713 70%);
+      --meter-border: #3B2F1C;
+      --meter-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+      --meter-value: #FFB347;
+      --meter-sub-bg: rgba(18, 16, 14, 0.56);
+      --meter-sub-border: #332B20;
+      --track-bg: #221D17;
+      --track-border: #332C24;
+      --zone-bg: linear-gradient(180deg, rgba(255, 179, 71, 0.52), rgba(255, 179, 71, 0.2));
+      --zone-border: rgba(255, 179, 71, 0.62);
+      --pin-color: #FFFFFF;
+      --pin-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 9px rgba(255, 255, 255, 0.55);
+      --toast-bg: rgba(36, 32, 25, 0.96);
+      --toast-text: #F3EEE5;
+    }
 
-  /* 标尺 */
-  .ruler{margin-top:12px}
-  .rtrack{position:relative;height:30px;border-radius:7px;background:#221d17;box-shadow:inset 0 0 0 1px #332c24;overflow:hidden}
-  .ruler.zones .rtrack{height:34px;border-radius:6px}
-  .rzone{position:absolute;top:0;bottom:0;background:linear-gradient(180deg,rgba(255,179,71,.52),rgba(255,179,71,.2));border-left:1px solid rgba(255,179,71,.62);border-right:1px solid rgba(255,179,71,.62)}
-  .rpin{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#fff;border-radius:1px;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 0 9px rgba(255,255,255,.55)}
-  .rseg{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font:600 9px/1 inherit;letter-spacing:-.02em;overflow:hidden;white-space:nowrap;border-right:1px solid rgba(0,0,0,.45)}
-  .rlabels{position:relative;height:13px;margin-top:5px}
-  .rlab{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;color:var(--faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  .rowtop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
-  .rowtop .lbl{margin-bottom:0}
-  .mini{display:flex;gap:2px;background:#221d17;border:1px solid var(--line);border-radius:9px;padding:2px}
-  .mini button{border:0;background:transparent;color:var(--faint);font:600 11px/1 inherit;font-family:inherit;padding:6px 10px;border-radius:7px;cursor:pointer}
-  .mini button.on{background:#3d3323;color:var(--text)}
-  .to{text-align:center;font-size:11px;color:var(--faint);margin:7px 0 6px;letter-spacing:.1em}
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior-y: none;
+    }
 
-  .row{margin-top:14px}
-  .row:first-child{margin-top:0}
-  .lbl{font-size:11px;letter-spacing:.1em;color:var(--faint);margin-bottom:7px}
-  .note{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.5}
+    .app-shell {
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: calc(82px + env(safe-area-inset-bottom));
+    }
 
-  select,input[type=number]{
-    width:100%;appearance:none;-webkit-appearance:none;
-    background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;
-    padding:12px 34px 12px 13px;font:500 15px/1.2 inherit;font-family:inherit;
-  }
-  select{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a29889' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 13px center;
-  }
-  input[type=number]{-moz-appearance:textfield;padding-right:13px;font-variant-numeric:tabular-nums}
-  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    .page-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--header-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+      margin-top: calc(-1 * env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
 
-  .stepper{display:flex;align-items:center;gap:8px}
-  .stepper button{
-    width:46px;height:46px;flex:none;border-radius:12px;border:1px solid var(--line);
-    background:var(--card2);color:var(--text);font:500 22px/1 inherit;cursor:pointer;
-  }
-  .stepper button:active{background:#322b22}
-  .stepper .mid{flex:1;position:relative}
-  .stepper .mid input{text-align:center;padding:12px 40px 12px 42px}
-  .stepper .suffix{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--dim);pointer-events:none}
+    .page-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
 
-  .tbl{max-height:302px;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;margin-top:2px;border-radius:10px}
-  .trow{display:grid;grid-template-columns:70px 1fr 1.15fr;gap:4px;align-items:center;padding:7px 8px;border-radius:8px;font-size:13px;color:#c6bdb0;font-variant-numeric:tabular-nums}
-  .trow.on{background:#2c2416;color:var(--text);box-shadow:inset 0 0 0 1px #4b3a1d}
-  .trow.on .c1{color:var(--amber);font-weight:600}
-  .thead{display:grid;grid-template-columns:70px 1fr 1.15fr;gap:4px;padding:0 8px 7px;font-size:10px;letter-spacing:.1em;color:var(--faint);background:var(--card)}
-  .c3{color:var(--faint);font-size:12px}
-  .trow.on .c3{color:#c9ab74}
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
 
-  details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 15px;margin-top:10px}
-  summary{padding:13px 0;font-size:14px;color:#ded5c7;cursor:pointer;list-style:none;outline:none}
-  summary::-webkit-details-marker{display:none}
-  summary::after{content:"+";float:right;color:var(--faint);font-weight:400}
-  details[open] summary::after{content:"−"}
-  details .body{padding:0 0 15px;border-top:1px solid var(--line);margin-top:-1px;padding-top:12px}
-  details p{margin:0 0 10px;font-size:13.5px;line-height:1.68;color:#b3aaa0}
-  details p:last-child{margin-bottom:0}
-  details b{color:#e8dcc6;font-weight:600}
-  details code{background:#2a251e;padding:1px 5px;border-radius:5px;font-size:12.5px;color:#e0c893;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-  details ol,details ul{margin:0 0 10px;padding-left:19px;font-size:13.5px;line-height:1.68;color:#b3aaa0}
-  details li{margin-bottom:5px}
-  footer{margin-top:18px;font-size:11px;color:#5f584d;line-height:1.7;text-align:center}
-  .hidden{display:none !important}
-  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
-</style>
+    .page-sub-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+
+    .theme-btn {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    .container {
+      padding: 14px 14px 18px;
+    }
+
+    .view-panel {
+      display: none;
+    }
+
+    .view-panel.active {
+      display: block;
+    }
+
+    .mono {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px;
+      margin-bottom: 12px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+
+    .param-current {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--amber-light);
+    }
+
+    .param-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .flash-pill {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 13px;
+      cursor: pointer;
+    }
+
+    .flash-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .flash-pill-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 8px;
+    }
+
+    .flash-pill-gn {
+      font-size: 12px;
+      color: var(--text-sub);
+      flex-shrink: 0;
+    }
+
+    .flash-pill-arrow {
+      margin-left: auto;
+      padding-left: 8px;
+      font-size: 12px;
+      color: var(--amber-light);
+      flex-shrink: 0;
+    }
+
+    .unit-toggle {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 13px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    /* Mode Switch */
+    .mode-switch {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 4px;
+      margin-bottom: 12px;
+    }
+
+    .mode-item {
+      text-align: center;
+      padding: 9px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .mode-item.active {
+      background: var(--amber);
+      color: var(--amber-ink);
+    }
+
+    /* Meter Screen */
+    .meter-screen {
+      background: var(--meter-bg);
+      border: 1px solid var(--meter-border);
+      border-radius: 16px;
+      padding: 18px 16px 15px;
+      margin-bottom: 12px;
+      box-shadow: var(--meter-shadow);
+    }
+
+    .meter-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .meter-label {
+      font-size: 13px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-amber {
+      background: var(--amber-bg);
+      color: var(--amber-light);
+      border: 1px solid var(--amber-border);
+    }
+
+    .badge-green {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+
+    .badge-warn {
+      background: var(--warn-bg);
+      color: var(--warn);
+      border: 1px solid var(--warn-border);
+    }
+
+    .meter-main-value {
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1.08;
+      color: var(--meter-value);
+      letter-spacing: -1px;
+      margin: 4px 0 14px;
+    }
+
+    .meter-main-unit {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--amber-light);
+      margin-left: 5px;
+      letter-spacing: 0;
+    }
+
+    .meter-sub-row {
+      display: flex;
+      align-items: center;
+      background: var(--meter-sub-bg);
+      border: 1px solid var(--meter-sub-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .meter-sub-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meter-sub-key {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-bottom: 2px;
+    }
+
+    .meter-sub-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .meter-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+      margin: 0 12px;
+    }
+
+    .meter-warning {
+      display: flex;
+      align-items: flex-start;
+      margin-top: 12px;
+      padding: 9px 11px;
+      border-radius: 9px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+    }
+
+    .warning-icon {
+      width: 17px;
+      height: 17px;
+      line-height: 17px;
+      text-align: center;
+      border-radius: 50%;
+      background: var(--warn);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 800;
+      margin-right: 8px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .warning-text {
+      font-size: 12px;
+      color: var(--warn-text);
+      line-height: 1.45;
+    }
+
+    /* 容差标尺 */
+    .ruler-wrap {
+      margin-top: 13px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .ruler-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .ruler-title {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .ruler-range-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--amber-light);
+    }
+
+    .rtrack {
+      position: relative;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--track-bg);
+      box-shadow: inset 0 0 0 1px var(--track-border);
+      overflow: hidden;
+    }
+
+    .rzone {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: var(--zone-bg);
+      border-left: 1px solid var(--zone-border);
+      border-right: 1px solid var(--zone-border);
+    }
+
+    .rpin {
+      position: absolute;
+      top: -3px;
+      bottom: -3px;
+      width: 2px;
+      margin-left: -1px;
+      background: var(--pin-color);
+      border-radius: 1px;
+      box-shadow: var(--pin-shadow);
+    }
+
+    .rpin.out {
+      background: var(--danger);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 8px rgba(255, 122, 122, 0.75);
+    }
+
+    .rlabels {
+      position: relative;
+      height: 15px;
+      margin-top: 5px;
+    }
+
+    .rlab {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: var(--text-sub);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tol-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tol-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tol-chip {
+      flex: 1;
+      text-align: center;
+      padding: 5px 6px;
+      border-radius: 7px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tol-chip.active {
+      background: var(--amber-bg);
+      border-color: var(--amber);
+      color: var(--amber-light);
+      font-weight: 600;
+    }
+
+    /* Controls */
+    .param-block {
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .param-block:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .chip-scroll {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .chip-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 13px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chip.active {
+      background: var(--amber-bg);
+      border-color: var(--amber);
+      color: var(--amber-light);
+      font-weight: 700;
+    }
+
+    .power-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+    }
+
+    .power-chip {
+      text-align: center;
+      padding: 9px 0;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .power-chip.active {
+      background: var(--amber-bg);
+      border-color: var(--amber);
+      color: var(--amber-light);
+    }
+
+    .power-chip.disabled {
+      opacity: 0.35;
+    }
+
+    .stepper-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-btn {
+      width: 50px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .step-btn:active, .mini-step-btn:active, .chip:active, .power-chip:active {
+      transform: scale(0.97);
+    }
+
+    .step-input {
+      flex: 1;
+      min-width: 0;
+      height: 40px;
+      text-align: center;
+      background: var(--input-bg);
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .step-input:focus {
+      border-color: var(--amber);
+    }
+
+    .quick-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .mini-chip {
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+
+    .mini-chip.active {
+      border-color: var(--amber);
+      color: var(--amber-light);
+      background: var(--amber-bg);
+    }
+
+    .sub-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+
+    .bias-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      gap: 10px;
+    }
+
+    .bias-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+
+    .bias-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .bias-stepper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .mini-step-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .bias-val {
+      min-width: 58px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--amber-light);
+    }
+
+    .sync-tip {
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.55;
+    }
+
+    .sync-tip strong {
+      color: var(--text-2);
+    }
+
+    /* Chart Table */
+    .summary-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .summary-meta {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    .table-card {
+      padding: 10px 14px;
+    }
+
+    .table-head {
+      display: flex;
+      align-items: center;
+      padding: 6px 4px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .table-row {
+      display: flex;
+      align-items: center;
+      padding: 11px 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-row:last-child {
+      border-bottom: none;
+    }
+
+    .table-row.dim {
+      opacity: 0.42;
+    }
+
+    .col-dist { width: 28%; }
+    .col-rec { width: 30%; }
+    .col-exact {
+      width: 42%;
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .row-dist {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .row-rec {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 7px;
+      background: var(--amber-bg);
+      color: var(--amber-light);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .row-rec.dim {
+      background: var(--surface-2);
+      color: var(--text-sub);
+    }
+
+    .row-exact { font-size: 12px; color: var(--text-2); }
+    .row-delta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+
+    .guide-item {
+      margin-bottom: 12px;
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .guide-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .guide-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .guide-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.55;
+    }
+
+    /* Gear Page */
+    .pref-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+    }
+
+    .pref-row:last-child {
+      padding-bottom: 2px;
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+
+    .pref-label { font-size: 14px; font-weight: 600; color: var(--text); }
+    .pref-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+    .seg-group {
+      display: flex;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+
+    .seg-btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+
+    .seg-btn.active {
+      background: var(--amber);
+      color: var(--amber-ink);
+    }
+
+    .form-row { margin-bottom: 10px; }
+    .form-split { display: flex; gap: 10px; margin-bottom: 12px; }
+    .form-col { flex: 1; min-width: 0; }
+    .field-label { display: block; font-size: 11px; color: var(--text-sub); margin-bottom: 5px; }
+
+    .text-input, .select-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .text-input:focus, .select-input:focus {
+      border-color: var(--amber);
+    }
+
+    .add-btn {
+      width: 100%;
+      height: 42px;
+      background: var(--amber);
+      color: var(--amber-ink);
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+    }
+
+    .flash-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      margin-bottom: 9px;
+      cursor: pointer;
+    }
+
+    .flash-item:last-child { margin-bottom: 0; }
+
+    .flash-item.active {
+      background: var(--amber-bg);
+      border-color: var(--amber);
+    }
+
+    .flash-item-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .flash-item-top {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 3px;
+    }
+
+    .flash-item-name {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .custom-tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .flash-item-note {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    .flash-item-specs {
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    .del-btn {
+      margin-left: 10px;
+      padding: 7px 11px;
+      border-radius: 7px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* Bottom Tab Bar */
+    .tab-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      background: var(--tab-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .tab-bar-inner {
+      max-width: 520px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      height: 56px;
+    }
+
+    .tab-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      color: var(--amber);
+      font-weight: 600;
+    }
+
+    .tab-btn svg {
+      width: 21px;
+      height: 21px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 66px;
+      transform: translateX(-50%) translateY(-10px);
+      background: var(--toast-bg);
+      border: 1px solid var(--border-2);
+      color: var(--toast-text);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 50;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
 </head>
 <body>
-
-<div class="hd">
-  <div>
-    <h1>闪光计算</h1>
-    <p>胶片机 · 手动闪光</p>
-  </div>
-  <div class="gnbadge"><small>有效指数</small><b id="gnOut">72</b></div>
-</div>
-
-<div class="seg" role="group" aria-label="计算模式">
-  <button data-mode="dist" class="on" aria-pressed="true">求距离</button>
-  <button data-mode="fnum" aria-pressed="false">求光圈</button>
-  <button data-mode="power" aria-pressed="false">求功率</button>
-</div>
-<p class="hint" id="hint">知道光圈，算能站多远。</p>
-
-<section class="card result">
-  <div class="rlabel" id="rlabel">准确距离</div>
-  <div class="rbig"><span id="rval">9.0</span><span id="runit">米</span></div>
-  <div class="rsub" id="rsub"></div>
-  <div class="rband" id="rband"></div>
-  <div id="ruler"></div>
-  <div class="rformula" id="rformula"></div>
-</section>
-
-<section class="card">
-  <div class="row">
-    <div class="lbl">胶片 ISO（按 1/3 档）</div>
-    <select id="isoSel"></select>
-    <div class="note" id="isoHint"></div>
-  </div>
-
-  <div class="row">
-    <div class="lbl">闪光灯</div>
-    <select id="flashSel"></select>
-    <div class="note" id="flashNote"></div>
-  </div>
-
-  <div class="row hidden" id="rowGn">
-    <div class="lbl">指数（ISO 100 全功率）</div>
-    <input type="number" id="gnIn" inputmode="decimal" min="1" max="200" step="1" value="36">
-  </div>
-
-  <div class="row" id="rowPower">
-    <div class="lbl">功率</div>
-    <select id="powerSel"></select>
-  </div>
-
-  <div class="row" id="rowF">
-    <div class="lbl">光圈</div>
-    <select id="fSel"></select>
-  </div>
-
-  <div class="row hidden" id="rowD">
-    <div class="rowtop">
-      <div class="lbl">到主体的距离</div>
-      <div class="mini" id="distMode">
-        <button type="button" data-dm="point" class="on">单点</button>
-        <button type="button" data-dm="range">范围</button>
+  <div class="app-shell">
+    <header class="page-header">
+      <div class="page-title" id="headerTitle">胶片闪光测光表</div>
+      <div class="header-right">
+        <button class="theme-btn" id="btnCycleTheme" type="button">普通</button>
+        <div class="page-sub-badge" id="headerBadge">ISO 400 · M</div>
       </div>
-    </div>
-    <div id="distPoint">
-      <div class="stepper">
-        <button type="button" id="dMinus" aria-label="减小距离">−</button>
-        <div class="mid">
-          <input type="number" id="dIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="3">
-          <span class="suffix">米</span>
-        </div>
-        <button type="button" id="dPlus" aria-label="增大距离">+</button>
+    </header>
+
+    <main class="container">
+      <!-- 页面 1：计算器 -->
+      <section id="view-calc" class="view-panel active"></section>
+
+      <!-- 页面 2：速查表 -->
+      <section id="view-chart" class="view-panel"></section>
+
+      <!-- 页面 3：灯库设置 -->
+      <section id="view-gear" class="view-panel"></section>
+    </main>
+
+    <nav class="tab-bar">
+      <div class="tab-bar-inner">
+        <button class="tab-btn active" data-tab="calc" type="button">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"></polygon></svg>
+          <span>计算</span>
+        </button>
+        <button class="tab-btn" data-tab="chart" type="button">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="10" y1="4" x2="10" y2="20"></line></svg>
+          <span>速查表</span>
+        </button>
+        <button class="tab-btn" data-tab="gear" type="button">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          <span>灯库设置</span>
+        </button>
       </div>
-    </div>
-    <div id="distRange" class="hidden">
-      <div class="stepper">
-        <button type="button" id="dLoMinus" aria-label="近端减小">−</button>
-        <div class="mid">
-          <input type="number" id="dLoIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="2">
-          <span class="suffix">米</span>
-        </div>
-        <button type="button" id="dLoPlus" aria-label="近端增大">+</button>
-      </div>
-      <div class="to">到</div>
-      <div class="stepper">
-        <button type="button" id="dHiMinus" aria-label="远端减小">−</button>
-        <div class="mid">
-          <input type="number" id="dHiIn" inputmode="decimal" min="0.2" max="60" step="0.1" value="4">
-          <span class="suffix">米</span>
-        </div>
-        <button type="button" id="dHiPlus" aria-label="远端增大">+</button>
-      </div>
-    </div>
+    </nav>
   </div>
 
-  <div class="row">
-    <div class="lbl">宽容度（决定“能用”的范围）</div>
-    <select id="tolSel"></select>
-  </div>
-
-  <div class="row">
-    <div class="lbl">光圈刻度（你的镜头能拧到哪几档）</div>
-    <select id="scaleSel"></select>
-  </div>
-</section>
-
-<section class="card">
-  <div class="lbl" id="tblTitle">换个光圈看看</div>
-  <div class="thead"><div>光圈</div><div id="th2">距离</div><div id="th3">可用范围</div></div>
-  <div class="tbl" id="tbl"></div>
-</section>
-
-<details>
-  <summary>三个词就够用了</summary>
-  <div class="body">
-    <p><b>闪光指数（GN）</b>是厂商给的一个数：<code>GN = 光圈 × 距离</code>。它只在三个条件同时成立时才准——ISO 100、全功率、某个特定的灯头焦距。工具把这三件事都折算进「有效指数」，所以你看到的是当前设置下的实际值。</p>
-    <p><b>平方反比</b>：距离翻一倍，光少四倍，也就是暗两档。所以闪光的距离容差比你以为的窄——近了立刻过曝，远了立刻欠曝。</p>
-    <p><b>快门不参与</b>。闪光是瞬时的（几千分之一秒），快门开多久只影响环境光。但有同步速度这回事：镜间快门任何速度都能同步，焦平面快门一般卡在 1/60 到 1/250 之间，超了画面会被快门帘切掉一条。不确定就查一下机身规格。</p>
-  </div>
-</details>
-
-<details>
-  <summary>灯背后那两个旋钮在调什么</summary>
-  <div class="body">
-    <p><b>功率</b>决定 GN。半功率不是指数减半，是 <code>GN × √0.5</code>——这就是为什么工具里功率是开平方进去的。</p>
-    <p><b>灯头变焦</b>决定光铺开多大。标称指数一般是在最长焦端标的，往广角拨，指数会明显掉。厂商很少给全每个焦段的数值，所以工具不做估算：要么按最长焦端算，要么用「自定义指数」填你信得过的数。</p>
-    <p>功率档位上，多数灯按 1/3 档调，也有只能整档的。工具按 1/3 档给，整档的灯就近取，最多差 1/6 档，负片看不出来。</p>
-    <p>柔光罩、跳闪（打天花板）、离机加柔光伞都会再吃掉光，吃多少取决于你怎么打。宁可按直打算完，再手动降一档。</p>
-  </div>
-</details>
-
-<details>
-  <summary>“可用范围”是怎么来的</summary>
-  <div class="body">
-    <p>不是猜的，是拿胶片的宽容度换算成距离。</p>
-    <p>彩色负片过曝两档基本看不出来，欠曝一档开始脏，所以默认按 <b>+2 / −1 档</b>算。举例：准确距离 9 米时，可用范围就是 4.5 到 12.7 米——过曝那一侧宽得多，这就是负片好用的原因。</p>
-    <p>反转片大约 ±1/2 档，数码大约 ±1/3 档，切过去范围会立刻收窄。想卡到一分不差，选「严格」。</p>
-    <p>注意这是<b>曝光</b>的容差，不是构图的容差——人站得比近端更近，脸就会白掉。</p>
-    <p>还有个更省事的做法：直接把卷按低一点拍。ISO 选低 1/3 档，就等于过曝 1/3 档，工具里的数字就是你要的曝光，不用再叠一层补偿。</p>
-  </div>
-</details>
-
-<footer>
-  指数取自厂商标称值：ISO 100、全功率、厂商标注的那个灯头焦距。不同型号的标称焦距不一样，选项里都标出来了。<br>
-  数字来自公式，不是经验值。拍之前先读一遍你的灯和镜头。
-</footer>
-
-<noscript><p style="color:#ff7a5c">这个工具需要 JavaScript。</p></noscript>
-
-<script>
-/* ============================================================
-   CORE:BEGIN  —— 纯计算，无 DOM。测试脚本会原样抽取这一段。
-   ============================================================ */
-
-/* 闪光灯预设：GN 一律指 ISO 100、全功率、厂商标称的那个灯头焦距（zoom 字段） */
-const FLASHES = [
-  { id:'tt350',  name:'Godox TT350',    gn:36, zoom:105 },
-  { id:'tt600',  name:'Godox TT600',    gn:60, zoom:105 },
-  { id:'v860ii', name:'Godox V860 II',  gn:60, zoom:105 },
-  { id:'580ex2', name:'Canon 580EX II', gn:58, zoom:105 },
-  { id:'430ex3', name:'Canon 430EX III',gn:43, zoom:105 },
-  { id:'sb800',  name:'Nikon SB-800',   gn:38, zoom:35 },
-  { id:'sb700',  name:'Nikon SB-700',   gn:28, zoom:35 },
-  { id:'v285hv', name:'Vivitar 285HV',  gn:37, zoom:35 },
-  { id:'custom', name:'自定义指数',      gn:36, zoom:0, custom:true }
-];
-
-/* 胶片 ISO：整档值，用来把 1/3 档的速度换算成“过曝/欠曝多少” */
-const ISO_STOPS = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400];
-/* 1/3 档梯度，25 到 6400 */
-const ISO_SERIES = [
-  25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800,
-  1000, 1250, 1600, 2000, 2500, 3200, 4000, 5000, 6400
-];
-
-/* 标准光圈序列（1/3 档表）*/
-const F_FULL  = [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32];
-const F_HALF  = [1, 1.2, 1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32];
-const F_THIRD = [1, 1.1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.5, 2.8, 3.2, 3.5, 4, 4.5, 5, 5.6, 6.3, 7.1, 8, 9, 10, 11, 13, 14, 16, 18, 20, 22, 25, 29, 32];
-const SERIES = { full:F_FULL, half:F_HALF, third:F_THIRD };
-
-/* 宽容度：over = 可接受的过曝档数，under = 可接受的欠曝档数 */
-const TOL = {
-  neg:   { label:'彩色负片（+2 / −1）', over:2,    under:1 },
-  slide: { label:'反转片（±1/2）',      over:0.5,  under:0.5 },
-  digi:  { label:'数码（±1/3）',        over:1/3,  under:1/3 },
-  strict:{ label:'严格（0）',           over:0,    under:0 }
-};
-
-/* 功率档：1/1 起，每 1/3 档一档，到 1/128 共 21 个 1/3 档 */
-const POWERS = Array.from({ length:22 }, (_, k) => Math.pow(2, -k/3));
-
-/* 按闪光灯 LCD 的写法标功率：整档 + 1/3 档偏移，例如「1/8 −0.3」 */
-function powerLabel(k){
-  if (k <= 0) return '1/1';
-  const base = Math.floor(k / 3);
-  const rest = k % 3;
-  const head = '1/' + Math.pow(2, base);
-  if (rest === 0) return head;
-  return head + (rest === 1 ? ' −0.3' : ' −0.7');
-}
-
-/* 把 ISO 和功率折算进指数 */
-function gnAt(gnRef, iso, power){
-  return gnRef * Math.sqrt(iso / 100) * Math.sqrt(power);
-}
-
-/* 指数 + 光圈 → 距离 */
-function distFor(gn, f){ return gn / f; }
-
-/* 指数 + 距离 → 需要的光圈（精确值） */
-function fExactFor(gn, d){ return gn / d; }
-
-/* 曝光容差换算成距离区间；d 为准确距离 */
-function bandFor(d, tol){
-  return {
-    exact: d,
-    min: d / Math.pow(2, tol.over / 2),   // 更近 = 更亮 = 过曝
-    max: d * Math.pow(2, tol.under / 2)   // 更远 = 更暗 = 欠曝
-  };
-}
-
-/* 光圈容差区间 */
-function fBandFor(f, tol){
-  return {
-    exact: f,
-    min: f / Math.pow(2, tol.over / 2),
-    max: f * Math.pow(2, tol.under / 2)
-  };
-}
-
-/* 距离误差（档）：正 = 过曝 */
-function distErrStops(dExact, dActual){
-  return 2 * Math.log2(dExact / dActual);
-}
-
-/* 光圈误差（档）：正 = 过曝 */
-function fErrStops(fExact, fActual){
-  return 2 * Math.log2(fExact / fActual);
-}
-
-/* 在给定序列里找最接近的档位（按档数距离，不是线性距离）*/
-function nearestF(list, val){
-  let best = list[0], bd = Infinity;
-  for (const f of list){
-    const d = Math.abs(Math.log2(f / val));
-    if (d < bd){ bd = d; best = f; }
-  }
-  return best;
-}
-
-/* 光圈 + 距离 → 需要的功率 */
-function powerFor(gnRef, iso, f, d){
-  const gnFull = gnRef * Math.sqrt(iso / 100);
-  const gnReq  = f * d;
-  const frac   = Math.pow(gnReq / gnFull, 2);   // 需要的功率占全功率的比例
-  const idx    = Math.round(-3 * Math.log2(frac)); // 最近的 1/3 档
-  return { gnFull, gnReq, frac, idx };
-}
-
-/* 把 1/3 档的 ISO 读出人话：这是把多少的卷过曝/欠曝了多少 */
-function isoRating(iso){
-  let base = ISO_STOPS[0], bd = Infinity;
-  for (const b of ISO_STOPS){
-    const d = Math.abs(Math.log2(iso / b));
-    if (d < bd){ bd = d; base = b; }
-  }
-  const stops = Math.log2(base / iso);           // 正 = 过曝
-  if (Math.abs(stops) < 0.01) return null;
-  const thirds = Math.round(Math.abs(stops) * 3);
-  const amount = thirds >= 3 ? (thirds / 3) + ' 档' : thirds + '/3 档';
-  return { base, stops, text: `相当于把 ${base} 的卷${stops > 0 ? '过曝' : '欠曝'} ${amount}` };
-}
-/* ---------- 距离是一段区间时 ---------- */
-
-/* 同一档光圈能不能罩住 [lo,hi]：窗口给出可用光圈的上下界 */
-function fRangeWindow(gn, lo, hi, tol){
-  const min = gn / (lo * Math.pow(2, tol.over / 2));   // 再开大，近端过曝
-  const max = gn * Math.pow(2, tol.under / 2) / hi;    // 再收小，远端欠曝
-  return { min, max, valid: min <= max };
-}
-
-/* 某一档功率在宽容度内覆盖的距离段 */
-function powerCover(gnFull, f, k, tol){
-  const dFull = gnFull * Math.sqrt(POWERS[k]) / f;
-  return {
-    dFull,
-    min: dFull / Math.pow(2, tol.over / 2),
-    max: dFull * Math.pow(2, tol.under / 2)
-  };
-}
-
-/* 第 k 档功率负责的距离段：相邻两档在 dFull·2^(-(k+0.5)/6) 处换档 */
-function zoneSpan(dFull, k){
-  return {
-    lo: dFull * Math.pow(2, -(k + 0.5) / 6),
-    hi: dFull * Math.pow(2, -(k - 0.5) / 6)
-  };
-}
-
-/* 把 [lo,hi] 切成“一段一档”的功率分区 */
-function powerZones(gnFull, f, lo, hi){
-  const dFull = gnFull / f;
-  const out = [];
-  for (let k = 0; k <= 21; k++){
-    const s = zoneSpan(dFull, k);
-    const from = Math.max(s.lo, lo);
-    const to = Math.min(s.hi, hi);
-    if (to > from + 1e-9) out.push({ k, from, to });
-  }
-  return out.sort((a, b) => a.from - b.from);
-}
-
-/* 推荐一档功率：能罩住整段就选余量最大的，罩不住就取两端误差最平衡的 */
-function recommendPower(gnFull, f, lo, hi, tol){
-  const needFar  = hi / Math.pow(2, tol.under / 2);    // dFull 的下限
-  const needNear = lo * Math.pow(2, tol.over / 2);     // dFull 的上限
-  const idealCovers = needFar <= needNear;
-  const target = Math.sqrt(needFar * needNear);
-  if (!isFinite(target) || target <= 0) return null;
-  const frac = Math.pow(target * f / gnFull, 2);
-  const k = Math.max(0, Math.min(21, Math.round(-3 * Math.log2(frac))));
-  const cover = powerCover(gnFull, f, k, tol);
-  const errNear = 2 * Math.log2(cover.dFull / lo);
-  const errFar  = 2 * Math.log2(cover.dFull / hi);
-  const overflow = Math.max(0, errNear - tol.over, -tol.under - errFar);
-  return { k, idealCovers, cover, errNear, errFar, overflow,
-           spans: cover.min <= lo + 1e-9 && cover.max >= hi - 1e-9 };
-}
-
-/* 区间下的光圈推荐 */
-function recommendAperture(gn, lo, hi, tol, list){
-  const w = fRangeWindow(gn, lo, hi, tol);
-  const center = w.valid ? Math.sqrt(w.min * w.max) : gn / Math.sqrt(lo * hi);
-  const f = nearestF(list, center);
-  const errNear = 2 * Math.log2(gn / (lo * f));
-  const errFar  = 2 * Math.log2(gn / (hi * f));
-  return { f, window: w, errNear, errFar,
-           overflow: Math.max(0, errNear - tol.over, -tol.under - errFar),
-           spans: f >= w.min - 1e-9 && f <= w.max + 1e-9 };
-}
-/* ============================================================
-   CORE:END
-   ============================================================ */
-
-/* ---------- 状态 ---------- */
-const KEY = 'flashcalc.v1';
-const S = {
-  mode:'dist', iso:400, flash:'tt350', gn:36,
-  power:6, f:5.6, d:3.0, dLo:2.0, dHi:4.0, distMode:'point',
-  scale:'half', tol:'neg'
-};
-
-function clamp(n, lo, hi){ return Math.min(hi, Math.max(lo, n)); }
-
-function load(){
-  try{
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return;
-    const o = JSON.parse(raw);
-    for (const k of Object.keys(S)){
-      if (o[k] !== undefined && o[k] !== null) S[k] = o[k];
-    }
-    S.iso   = clamp(Number(S.iso) || 400, 25, 6400);
-    if (!ISO_SERIES.includes(S.iso)){
-      S.iso = ISO_SERIES.reduce((a, b) => Math.abs(Math.log2(b / S.iso)) < Math.abs(Math.log2(a / S.iso)) ? b : a);
-    }
-    S.gn    = clamp(Number(S.gn) || 36, 1, 200);
-    S.d     = clamp(Number(S.d) || 3, 0.2, 60);
-    S.dLo   = clamp(Number(S.dLo) || 2, 0.2, 60);
-    S.dHi   = clamp(Number(S.dHi) || 4, 0.2, 60);
-    if (S.dLo > S.dHi){ const t = S.dLo; S.dLo = S.dHi; S.dHi = t; }
-    if (S.distMode !== 'range') S.distMode = 'point';
-    S.f     = Number(S.f) || 8;
-    S.power = clamp(Math.round(Number(S.power) || 0), 0, 21);
-    if (!['dist','fnum','power'].includes(S.mode)) S.mode = 'dist';
-    if (!SERIES[S.scale]) S.scale = 'half';
-    if (!TOL[S.tol]) S.tol = 'neg';
-    if (!FLASHES.some(x => x.id === S.flash)) S.flash = 'tt350';
-  }catch(e){ /* 隐私模式 / file:// 受限，忽略 */ }
-}
-function save(){
-  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
-}
-
-/* ---------- 格式化 ---------- */
-/* 去掉多余的小数尾巴：72.0 → 72，24.03 → 24 */
-function num(x, d = 1){
-  if (!isFinite(x)) return '—';
-  return String(Math.round(x * Math.pow(10, d)) / Math.pow(10, d));
-}
-function len(m){
-  if (!isFinite(m) || m <= 0) return { v:'—', u:'' };
-  if (m < 1)  return { v:String(Math.round(m * 100)), u:'厘米' };
-  if (m < 10) return { v:m.toFixed(1), u:'米' };
-  return { v:String(Math.round(m)), u:'米' };
-}
-function lenStr(m){ const x = len(m); return x.v + x.u; }
-/* 区间写法：3.2 – 9.1 米（单位只出现在最后） */
-function lenRange(a, b){
-  if (a < 1 && b < 1) return Math.round(a * 100) + ' – ' + Math.round(b * 100) + ' 厘米';
-  const f = m => m < 10 ? String(Math.round(m * 10) / 10) : String(Math.round(m));
-  return f(a) + ' – ' + f(b) + ' 米';
-}
-function stopsStr(x){
-  const r = Math.round(x * 10) / 10;
-  if (Math.abs(r) < 0.05) return '0 档';
-  return (r > 0 ? '+' : '−') + Math.abs(r).toFixed(1) + ' 档';
-}
-/* 功率档位的偏差说人话：这是选档造成的亮度差 */
-function powerDelta(x){
-  const r = Math.round(x * 10) / 10;
-  if (Math.abs(r) < 0.05) return '正好';
-  return (r > 0 ? '比理想亮 ' : '比理想暗 ') + Math.abs(r).toFixed(1) + ' 档';
-}
-function fStr(f){
-  return 'f/' + (f < 10 ? (Math.round(f * 10) / 10).toString() : String(Math.round(f)));
-}
-
-/* ---------- DOM ---------- */
-const $ = id => document.getElementById(id);
-const el = {
-  gnOut:$('gnOut'), hint:$('hint'),
-  rlabel:$('rlabel'), rval:$('rval'), runit:$('runit'),
-  rsub:$('rsub'), rband:$('rband'), rformula:$('rformula'),
-  isoChips:$('isoSel'), isoHint:$('isoHint'), flashSel:$('flashSel'), flashNote:$('flashNote'),
-  rowGn:$('rowGn'), gnIn:$('gnIn'),
-  powerSel:$('powerSel'), rowPower:$('rowPower'),
-  fSel:$('fSel'), rowF:$('rowF'),
-  dIn:$('dIn'), rowD:$('rowD'), dMinus:$('dMinus'), dPlus:$('dPlus'),
-  distMode:$('distMode'), distPoint:$('distPoint'), distRange:$('distRange'),
-  dLoIn:$('dLoIn'), dHiIn:$('dHiIn'),
-  dLoMinus:$('dLoMinus'), dLoPlus:$('dLoPlus'), dHiMinus:$('dHiMinus'), dHiPlus:$('dHiPlus'),
-  ruler:$('ruler'),
-  tolSel:$('tolSel'), scaleSel:$('scaleSel'),
-  tbl:$('tbl'), tblTitle:$('tblTitle'), th2:$('th2'), th3:$('th3')
-};
-
-const ISO_LIST = ISO_SERIES;
-const MODE_HINT = {
-  dist:'知道光圈，算能站多远。',
-  fnum:'站定了位置，算该开多大光圈。',
-  power:'光圈和距离都定了，算灯该调到几档。'
-};
-const MODE_LABEL = { dist:'准确距离', fnum:'建议光圈', power:'建议功率' };
-
-let lastHighlight = null;
-
-/* ---------- 构建控件 ---------- */
-function flashLabel(f){
-  return f.custom ? f.name : `${f.name} · GN ${f.gn}@${f.zoom}mm`;
-}
-
-function buildControls(){
-  el.isoChips.innerHTML = ISO_LIST
-    .map(v => `<option value="${v}">${v}</option>`).join('');
-
-  el.flashSel.innerHTML = FLASHES
-    .map(f => `<option value="${f.id}">${flashLabel(f)}</option>`).join('');
-
-  el.powerSel.innerHTML = POWERS
-    .map((_, k) => `<option value="${k}">${powerLabel(k)}</option>`).join('');
-
-  el.tolSel.innerHTML = Object.keys(TOL)
-    .map(k => `<option value="${k}">${TOL[k].label}</option>`).join('');
-
-  el.scaleSel.innerHTML = [
-    ['full','整档（1、1.4、2、2.8…）'],
-    ['half','半档（1.2、1.7、2.4…）'],
-    ['third','1/3 档（1.1、1.6、1.8…）']
-  ].map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
-}
-
-function fillApertures(){
-  const list = SERIES[S.scale];
-  el.fSel.innerHTML = list
-    .map(f => `<option value="${f}">${fStr(f)}</option>`).join('');
-  if (!list.includes(Number(S.f))){
-    el.fSel.insertAdjacentHTML('beforeend', `<option value="${S.f}">${fStr(S.f)}</option>`);
-  }
-  el.fSel.value = String(S.f);
-}
-
-/* ---------- 标尺 ---------- */
-/* 对数刻度：距离和光圈都是按档走的，线性刻度会把近端挤扁 */
-function scalePct(v, lo, hi){
-  const t = Math.log(v / lo) / Math.log(hi / lo);
-  return Math.max(4, Math.min(96, t * 100));
-}
-
-/* 区间带标尺：给“这个设置在哪一段有效”用 */
-function rulerBandHTML({ lo, hi, band, mark, fmt }){
-  const a = scalePct(band.min, lo, hi);
-  const b = scalePct(band.max, lo, hi);
-  const m = scalePct(mark, lo, hi);
-  const labels = (b - a) < 20
-    ? `<span class="rlab" style="left:${(a + b) / 2}%">${fmt(band.min)} – ${fmt(band.max)}</span>`
-    : `<span class="rlab" style="left:${a}%">${fmt(band.min)}</span>` +
-      `<span class="rlab" style="left:${b}%">${fmt(band.max)}</span>`;
-  return `<div class="ruler">
-    <div class="rtrack">
-      <div class="rzone" style="left:${a}%;right:${100 - b}%"></div>
-      <div class="rpin" style="left:${m}%"></div>
-    </div>
-    <div class="rlabels">${labels}</div>
-  </div>`;
-}
-
-/* 分区标尺：给“距离 → 功率档”的对应关系用。
-   相邻的 1/3 档合并成整档一组，否则六段挤在一起标签会打架 */
-function rulerZonesHTML({ lo, hi, zones, recK, fmt }){
-  const groups = [];
-  for (const z of zones){
-    const base = Math.floor(z.k / 3);
-    const last = groups[groups.length - 1];
-    if (last && last.base === base){ last.to = z.to; last.ks.push(z.k); }
-    else groups.push({ base, from: z.from, to: z.to, ks: [z.k] });
-  }
-
-  const segs = groups.map(g => {
-    const a = scalePct(g.from, lo, hi);
-    const b = scalePct(g.to, lo, hi);
-    const w = b - a;
-    const bright = 70 - (g.base / 7) * 36;        // 整档越高（光越弱）颜色越沉
-    const fg = bright > 52 ? '#1c1408' : '#f2e7d2';
-    const label = w >= 12 ? '1/' + Math.pow(2, g.base) : '';
-    return `<div class="rseg" style="left:${a}%;width:${w}%;background:hsl(38 74% ${bright}%)">` +
-      (label ? `<span style="color:${fg}">${label}</span>` : '') + '</div>';
-  }).join('');
-
-  const rz = zones.find(z => z.k === recK);
-  const pin = rz
-    ? `<div class="rpin" style="left:${scalePct((rz.from + rz.to) / 2, lo, hi)}%"></div>`
-    : '';
-
-  const marks = [lo, ...groups.map(g => g.to)];
-  let last = -99;
-  const labels = marks.map(v => {
-    const p = scalePct(v, lo, hi);
-    if (p - last < 9) return '';
-    last = p;
-    return `<span class="rlab" style="left:${p}%">${fmt(v)}</span>`;
-  }).join('');
-
-  return `<div class="ruler zones"><div class="rtrack">${segs}${pin}</div>
-    <div class="rlabels">${labels}</div></div>`;
-}
-
-/* ---------- 主渲染 ---------- */
-function render(){
-  const flash = FLASHES.find(x => x.id === S.flash) || FLASHES[0];
-  const gnRef = flash.custom ? Number(S.gn) : flash.gn;
-  const tol = TOL[S.tol];
-  const power = POWERS[S.power];
-  const gn = gnAt(gnRef, S.iso, power);
-
-  el.gnOut.textContent = gn.toFixed(gn < 20 ? 1 : 0);
-  el.hint.textContent = MODE_HINT[S.mode];
-  el.rlabel.textContent = MODE_LABEL[S.mode];
-
-  document.querySelectorAll('.seg button').forEach(b => {
-    const on = b.dataset.mode === S.mode;
-    b.classList.toggle('on', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  });
-
-  el.rowPower.classList.toggle('hidden', S.mode === 'power');
-  el.rowF.classList.toggle('hidden', S.mode === 'fnum');
-  el.rowD.classList.toggle('hidden', S.mode === 'dist');
-  el.rowGn.classList.toggle('hidden', !flash.custom);
-
-  el.distPoint.classList.toggle('hidden', S.distMode === 'range');
-  el.distRange.classList.toggle('hidden', S.distMode !== 'range');
-  el.distMode.querySelectorAll('button').forEach(b => {
-    const on = b.dataset.dm === S.distMode;
-    b.classList.toggle('on', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  });
-  if (document.activeElement !== el.dLoIn) el.dLoIn.value = String(S.dLo);
-  if (document.activeElement !== el.dHiIn) el.dHiIn.value = String(S.dHi);
-
-  el.isoChips.value = String(S.iso);
-  const rating = isoRating(S.iso);
-  el.isoHint.textContent = rating ? rating.text : '';
-  el.isoHint.classList.toggle('hidden', !rating);
-
-  el.flashSel.value = S.flash;
-  el.flashNote.textContent = flash.custom
-    ? '填说明书上的指数：ISO 100、全功率、标称灯头焦距下的那个数。'
-    : `标称条件：ISO 100 · ${flash.zoom}mm 灯头 · 全功率` +
-      (flash.zoom >= 85 ? '。灯头往广角拨，指数会明显往下掉。' : '。');
-
-  el.powerSel.value = String(S.power);
-  el.tolSel.value = S.tol;
-  el.scaleSel.value = S.scale;
-  if (flash.custom) el.gnIn.value = String(S.gn);
-  if (document.activeElement !== el.dIn) el.dIn.value = String(S.d);
-
-  const flashName = flash.name;
-  const common = `${powerLabel(S.power)} · ISO ${S.iso} · ${flashName}`;
-  const commonIso = `ISO ${S.iso} · ${flashName}`;
-  const gnParts = [String(gnRef)];
-  if (S.iso !== 100) gnParts.push(`× √(${S.iso}/100)`);
-  if (S.power !== 0) gnParts.push(`× ${num(Math.sqrt(power), 2)}`);
-  const gnStep = gnParts.length > 1
-    ? `有效指数 ${gnParts.join(' ')} = ${num(gn)}`
-    : `有效指数 ${num(gn)}`;
-
-  const ranged = S.distMode === 'range' && S.mode !== 'dist';
-  const lo = ranged ? S.dLo : S.d;
-  const hi = ranged ? S.dHi : S.d;
-  const list = SERIES[S.scale];
-  const gnFull = gnRef * Math.sqrt(S.iso / 100);
-
-  if (S.mode === 'dist'){
-    const d = distFor(gn, S.f);
-    const b = bandFor(d, tol);
-    const L = len(d);
-    el.rval.textContent = L.v; el.runit.textContent = L.u;
-    el.rval.className = '';
-    el.rsub.textContent = `${fStr(S.f)} · ${common}`;
-    el.rband.innerHTML = `在 <b>${lenRange(b.min, b.max)}</b>之间都能用`;
-    el.rformula.innerHTML = `${gnStep}<br>${num(gn)} ÷ ${S.f} = ${num(d, 1)} 米`;
-    el.ruler.innerHTML = rulerBandHTML({
-      lo: b.min / 1.35, hi: b.max * 1.35, band: b, mark: d, fmt: lenStr
-    });
-  }
-
-  if (S.mode === 'fnum'){
-    if (!ranged){
-      const fEx = fExactFor(gn, S.d);
-      const fPick = nearestF(list, fEx);
-      const err = fErrStops(fEx, fPick);
-      const fb = fBandFor(fEx, tol);
-      el.rval.textContent = fStr(fPick); el.runit.textContent = '';
-      el.rval.className = 'txt';
-      el.rsub.textContent = `在 ${lenStr(S.d)} 处 · ${common}`;
-      el.rband.innerHTML = `光圈在 <b>${fStr(fb.min)} – ${fStr(fb.max)}</b> 之间都能用`;
-      el.rformula.innerHTML =
-        `${gnStep}<br>${num(gn)} ÷ ${num(S.d, 1)} = f/${num(fEx)} → 最近档 ${fStr(fPick)}` +
-        (Math.abs(err) >= 0.05 ? ` <span class="rerr">（${stopsStr(err)}）</span>` : '');
-      el.ruler.innerHTML = rulerBandHTML({
-        lo: fb.min / 1.35, hi: fb.max * 1.35,
-        band: { min: fb.min, max: fb.max }, mark: fPick, fmt: fStr
-      });
-    } else {
-      const rec = recommendAperture(gn, lo, hi, tol, list);
-      const w = rec.window;
-      const band = w.valid
-        ? { min: w.min, max: w.max }
-        : { min: Math.min(w.min, w.max), max: Math.max(w.min, w.max) };
-      el.rval.textContent = fStr(rec.f); el.runit.textContent = '';
-      el.rval.className = 'txt';
-      el.rsub.textContent = `${lenRange(lo, hi)} · ${common}`;
-      el.rband.innerHTML = rec.spans
-        ? `整段 ${lenRange(lo, hi)} 都能曝对（近端 ${stopsStr(rec.errNear)} · 远端 ${stopsStr(rec.errFar)}）`
-        : `一档盖不住整段，差 <b>${rec.overflow.toFixed(1)} 档</b>。收窄范围，或者开大光圈。`;
-      el.rformula.innerHTML =
-        `${gnStep}<br>${num(gn)} ÷ ${num(lo, 1)} = f/${num(gn / lo)}` +
-        ` ｜ ÷ ${num(hi, 1)} = f/${num(gn / hi)} → 取 ${fStr(rec.f)}`;
-      el.ruler.innerHTML = rulerBandHTML({
-        lo: band.min / 1.35, hi: band.max * 1.35, band, mark: rec.f, fmt: fStr
-      });
-    }
-  }
-
-  if (S.mode === 'power'){
-    el.runit.textContent = '';
-    if (!ranged){
-      const p = powerFor(gnRef, S.iso, S.f, S.d);
-      const tooStrong = p.frac < 1 / 128;
-      const notEnough = p.frac > 1;
-      const idx = clamp(p.idx, 0, 21);
-      const cov = powerCover(gnFull, S.f, idx, tol);
-
-      if (notEnough){
-        const dMax = p.gnFull / Number(S.f);
-        el.rval.textContent = '不够'; el.runit.textContent = '';
-        el.rval.className = 'txt bad';
-        el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
-        el.rband.innerHTML = `全功率在这个光圈下只到 <b>${lenStr(dMax)}</b>。靠近、开大光圈，或换高感片。`;
-        el.rformula.innerHTML = `需要 GN ${num(p.gnReq)}，灯只有 ${num(p.gnFull)}`;
-      } else if (tooStrong){
-        el.rval.textContent = powerLabel(21); el.runit.textContent = '';
-        el.rval.className = 'txt bad';
-        el.rsub.textContent = `最低档仍偏亮 · ${fStr(S.f)} · ${lenStr(S.d)}`;
-        el.rband.innerHTML = `收到 1/128 还是过曝，还多 <b>${Math.abs(Math.log2(p.frac / POWERS[21])).toFixed(1)} 档</b>。收小光圈、加 ND，或者退远一点。`;
-        el.rformula.innerHTML = `需要功率 1/${num(1 / p.frac, 0)}，低于灯的 1/128`;
-      } else {
-        const err = Math.log2(POWERS[idx] / p.frac);
-        el.rval.textContent = powerLabel(idx); el.runit.textContent = '';
-        el.rval.className = 'txt';
-        el.rsub.textContent = `${fStr(S.f)} · ${lenStr(S.d)} · ${commonIso}`;
-        el.rband.innerHTML = `需要 <b>1/${num(1 / p.frac, 1)}</b> 全功率` +
-          (Math.abs(err) >= 0.05 ? `，${powerDelta(err)}` : '，正好');
-        el.rformula.innerHTML =
-          `${fStr(S.f)} × ${num(S.d, 1)} 米 = GN ${num(p.gnReq)}<br>` +
-          `(${num(p.gnReq)} ÷ ${num(p.gnFull)})² = 1/${num(1 / p.frac, 1)} 全功率`;
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      /* ============================================================
+         CORE:BEGIN  —— 纯计算，无 DOM。test/core.test.mjs 会原样抽取这一段。
+         ============================================================ */
+      const METERS_TO_FEET = 3.280839895;
+      const ISO_OPTIONS = [25, 50, 64, 100, 125, 160, 200, 250, 320, 400, 500, 800, 1600, 3200];
+      const POWER_LEVELS = [
+        { label: '1/1', ratio: 1 },
+        { label: '1/2', ratio: 1 / 2 },
+        { label: '1/4', ratio: 1 / 4 },
+        { label: '1/8', ratio: 1 / 8 },
+        { label: '1/16', ratio: 1 / 16 },
+        { label: '1/32', ratio: 1 / 32 },
+        { label: '1/64', ratio: 1 / 64 },
+        { label: '1/128', ratio: 1 / 128 },
+      ];
+      const MODIFIER_PRESETS = [
+        { id: 'direct', name: '直闪', lossEv: 0 },
+        { id: 'diffuser', name: '柔光罩', lossEv: 1.0 },
+        { id: 'card', name: '反光板', lossEv: 1.5 },
+        { id: 'bounce', name: '低顶跳闪', lossEv: 2.0 },
+        { id: 'high_bounce', name: '高顶跳闪', lossEv: 3.0 },
+      ];
+      const TOLERANCE_PRESETS = [
+        { id: 'neg', label: '负片 +2/−1', over: 2, under: 1 },
+        { id: 'slide', label: '反转 ±0.5', over: 0.5, under: 0.5 },
+        { id: 'digi', label: '数码 ±1/3', over: 1 / 3, under: 1 / 3 },
+        { id: 'strict', label: '严格 0', over: 0, under: 0 },
+      ];
+
+      const FULL_STOPS = ['1.0', '1.4', '2', '2.8', '4', '5.6', '8', '11', '16', '22', '32'].map((s, idx) => ({
+        label: 'f/' + s,
+        value: Math.pow(2, idx / 2),
+      }));
+      const HALF_STOPS = [
+        '1.0', '1.2', '1.4', '1.7', '2', '2.4', '2.8', '3.4',
+        '4', '4.8', '5.6', '6.7', '8', '9.5', '11', '13',
+        '16', '19', '22', '27', '32',
+      ].map((s, idx) => ({ label: 'f/' + s, value: Math.pow(2, idx / 4) }));
+      const THIRD_STOPS = [
+        '1.0', '1.1', '1.2', '1.4', '1.6', '1.8', '2', '2.2', '2.5',
+        '2.8', '3.2', '3.5', '4', '4.5', '5.0', '5.6', '6.3', '7.1',
+        '8', '9', '10', '11', '13', '14', '16', '18', '20',
+        '22', '25', '29', '32',
+      ].map((s, idx) => ({ label: 'f/' + s, value: Math.pow(2, idx / 6) }));
+
+      const DEFAULT_FLASH_PRESETS = [
+        { id: 'godox-lux-junior', name: '神牛 Lux Junior', gn100m: 12, minPowerLabel: '1/64', note: '复古便携热靴灯 · 28mm 覆盖视角', builtin: true },
+        { id: 'godox-lux-senior', name: '神牛 Lux Senior', gn100m: 14, minPowerLabel: '1/64', note: '折叠反光罩复古灯 · 28mm 覆盖', builtin: true },
+        { id: 'godox-im30', name: '神牛 iM30', gn100m: 15, minPowerLabel: '1/64', note: '迷你单触点手动闪光灯', builtin: true },
+        { id: 'godox-im20', name: '神牛 iM20 / iM22', gn100m: 10, minPowerLabel: '1/32', note: '超轻便携机顶小闪光灯', builtin: true },
+        { id: 'godox-tt350', name: 'Godox TT350 (105mm)', gn100m: 36, minPowerLabel: '1/128', note: '标称条件：105mm 变焦端 · 广角端指数更低', builtin: true },
+        { id: 'godox-tt600', name: 'Godox TT600 (105mm)', gn100m: 60, minPowerLabel: '1/128', note: '大功率机顶手动灯 · 105mm 标称', builtin: true },
+        { id: 'fuji-ef-x20', name: '富士 EF-X20', gn100m: 20, minPowerLabel: '1/64', note: '经典金属拨盘闪光灯', builtin: true },
+        { id: 'yinyan-by24', name: '银燕 BY-24ZP', gn100m: 24, minPowerLabel: '1/1', note: '经典平价全功率老灯（仅 1/1 档）', builtin: true },
+        { id: 'nikon-sb24-35', name: '尼康 SB-24 (35mm)', gn100m: 36, minPowerLabel: '1/16', note: '胶片时代主力灯 · 35mm 焦距端标称', builtin: true },
+        { id: 'nikon-sb800-35', name: 'Nikon SB-800 (35mm)', gn100m: 38, minPowerLabel: '1/128', note: '经典热靴灯 · 35mm 焦距端标称', builtin: true },
+        { id: 'canon-580ex-50', name: '佳能 580EX II (50mm)', gn100m: 42, minPowerLabel: '1/128', note: '大功率机顶灯 · 50mm 焦距端标称', builtin: true },
+        { id: 'vivitar-285hv', name: 'Vivitar 285HV (35mm)', gn100m: 37, minPowerLabel: '1/16', note: '经典手动复古灯 · 35mm 焦距端标称', builtin: true },
+      ];
+
+      const CHART_DISTANCES_M = [0.7, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.0, 10.0];
+
+      function getApertureStops(stepMode) {
+        if (stepMode === 'full') return FULL_STOPS;
+        if (stepMode === 'half') return HALF_STOPS;
+        return THIRD_STOPS;
       }
-      el.ruler.innerHTML = rulerBandHTML({
-        lo: cov.min / 1.35, hi: cov.max * 1.35,
-        band: { min: cov.min, max: cov.max }, mark: cov.dFull, fmt: lenStr
+
+      function getPowerByLabel(label) {
+        return POWER_LEVELS.find((p) => p.label === label) || POWER_LEVELS[0];
+      }
+
+      function getAvailablePowers(minPowerLabel) {
+        const idx = POWER_LEVELS.findIndex((p) => p.label === minPowerLabel);
+        return idx === -1 ? POWER_LEVELS : POWER_LEVELS.slice(0, idx + 1);
+      }
+
+      function getToleranceById(id) {
+        return TOLERANCE_PRESETS.find((t) => t.id === id) || TOLERANCE_PRESETS[0];
+      }
+
+      function metersToUnit(m, unit) {
+        return unit === 'ft' ? m * METERS_TO_FEET : m;
+      }
+
+      function unitToMeters(v, unit) {
+        return unit === 'ft' ? v / METERS_TO_FEET : v;
+      }
+
+      function fmt(num, decimals = 1) {
+        if (!Number.isFinite(num)) return '--';
+        return Number(num.toFixed(decimals)).toString();
+      }
+
+      function fmtEvDelta(evDelta) {
+        if (!Number.isFinite(evDelta)) return '0 EV';
+        const rounded = Math.round(evDelta * 10) / 10;
+        if (Math.abs(rounded) < 0.05) return '准确 (0 EV)';
+        const sign = rounded > 0 ? '+' : '';
+        return `${sign}${rounded.toFixed(1)} EV (${rounded > 0 ? '略过曝' : '略欠曝'})`;
+      }
+
+      function calcEffectiveGnMeters({ gn100m, iso = 100, powerRatio = 1, modifierLossEv = 0, exposureBiasEv = 0 }) {
+        const safeGn = Math.max(0.1, Number(gn100m) || 12);
+        const safeIso = Math.max(1, Number(iso) || 100);
+        const safePower = Math.max(1 / 256, Number(powerRatio) || 1);
+        const totalEv = (Number(modifierLossEv) || 0) + (Number(exposureBiasEv) || 0);
+        const isoFactor = Math.sqrt(safeIso / 100);
+        const powerFactor = Math.sqrt(safePower);
+        const evFactor = Math.pow(2, -totalEv / 2);
+        return {
+          effectiveGnMeters: safeGn * isoFactor * powerFactor * evFactor,
+          maxAchievableGnMeters: safeGn * isoFactor * evFactor,
+        };
+      }
+
+      function findNearestAperture(exactAperture, stepMode = 'third') {
+        const stops = getApertureStops(stepMode);
+        let best = stops[0];
+        let bestAbs = Infinity;
+        let bestDelta = 0;
+        for (const stop of stops) {
+          const evDelta = 2 * Math.log2(exactAperture / stop.value);
+          const abs = Math.abs(evDelta);
+          if (abs < bestAbs) {
+            bestAbs = abs;
+            bestDelta = evDelta;
+            best = stop;
+          }
+        }
+        return { stop: best, evDelta: bestDelta };
+      }
+
+      function calcApertureBand(exactAperture, tol) {
+        return {
+          min: exactAperture / Math.pow(2, tol.over / 2),
+          max: exactAperture * Math.pow(2, tol.under / 2),
+        };
+      }
+
+      function calcDistanceBand(exactDistance, tol) {
+        return {
+          min: exactDistance / Math.pow(2, tol.over / 2),
+          max: exactDistance * Math.pow(2, tol.under / 2),
+        };
+      }
+
+      function solveApertureState(st) {
+        const power = getPowerByLabel(st.powerLabel);
+        const safeDist = Math.max(0.1, Number(st.distanceMeters) || 1);
+        const { effectiveGnMeters } = calcEffectiveGnMeters({
+          gn100m: st.gn100m,
+          iso: st.iso,
+          powerRatio: power.ratio,
+          modifierLossEv: st.modifierLossEv,
+          exposureBiasEv: st.exposureBiasEv,
+        });
+        const exactAperture = effectiveGnMeters / safeDist;
+        const nearest = findNearestAperture(exactAperture, st.stepMode);
+        const tol = getToleranceById(st.toleranceId);
+        const band = calcApertureBand(exactAperture, tol);
+        let warning = '';
+        if (exactAperture < 1.0) {
+          warning = '所需光圈大于 f/1.0，严重欠曝。建议提高输出功率、改用高感光度胶卷或拉近拍摄距离。';
+        } else if (exactAperture < 1.4) {
+          warning = '所需光圈较大（超出常见标头最大光圈），若镜头不支持请调高功率或靠近主体。';
+        } else if (exactAperture > 22) {
+          warning = '所需光圈极小（超过 f/22），若镜头无此小光圈请降低闪光灯功率或退后拍摄。';
+        }
+        return { exactAperture, nearest, band, effectiveGnMeters, warning };
+      }
+
+      function solveDistanceState(st) {
+        const power = getPowerByLabel(st.powerLabel);
+        const tol = getToleranceById(st.toleranceId);
+        const safeAperture = Math.max(0.7, Number(st.apertureValue) || 4);
+        const { effectiveGnMeters } = calcEffectiveGnMeters({
+          gn100m: st.gn100m,
+          iso: st.iso,
+          powerRatio: power.ratio,
+          modifierLossEv: st.modifierLossEv,
+          exposureBiasEv: st.exposureBiasEv,
+        });
+        const exactDistanceMeters = effectiveGnMeters / safeAperture;
+        const bandMeters = calcDistanceBand(exactDistanceMeters, tol);
+        let warning = '';
+        if (exactDistanceMeters < 0.5) {
+          warning = '有效距离过近（小于 0.5m），机顶闪光灯可能因视差或遮挡导致布光不均，建议调低功率或缩小光圈。';
+        } else if (exactDistanceMeters > 15) {
+          warning = '计算距离超过 15m，实际户外环境中闪光灯衰减与环境杂光影响较大。';
+        }
+        return {
+          exactDistanceMeters,
+          exactInUnit: metersToUnit(exactDistanceMeters, st.unit),
+          minSafeInUnit: metersToUnit(bandMeters.min, st.unit),
+          maxSafeInUnit: metersToUnit(bandMeters.max, st.unit),
+          effectiveGnMeters,
+          warning,
+        };
+      }
+
+      function solvePowerState(st) {
+        const safeDist = Math.max(0.1, Number(st.distanceMeters) || 1);
+        const safeAperture = Math.max(0.7, Number(st.apertureValue) || 4);
+        const tol = getToleranceById(st.toleranceId);
+        const { maxAchievableGnMeters } = calcEffectiveGnMeters({
+          gn100m: st.gn100m,
+          iso: st.iso,
+          powerRatio: 1,
+          modifierLossEv: st.modifierLossEv,
+          exposureBiasEv: st.exposureBiasEv,
+        });
+        const exactPowerRatio = Math.pow((safeDist * safeAperture) / maxAchievableGnMeters, 2);
+        const available = getAvailablePowers(st.minPowerLabel);
+        let best = available[0];
+        let bestAbs = Infinity;
+        let bestDelta = 0;
+        for (const item of available) {
+          const evDelta = Math.log2(item.ratio / exactPowerRatio);
+          const abs = Math.abs(evDelta);
+          if (abs < bestAbs) {
+            bestAbs = abs;
+            bestDelta = evDelta;
+            best = item;
+          }
+        }
+        const minPower = available[available.length - 1];
+        const dRecMeters = (maxAchievableGnMeters * Math.sqrt(best.ratio)) / safeAperture;
+        const bandMeters = calcDistanceBand(dRecMeters, tol);
+        let warning = '';
+        if (exactPowerRatio > 1.0) {
+          warning = `全光 (1/1) 仍欠曝约 ${Math.log2(exactPowerRatio).toFixed(1)} EV，请开大光圈、拉近距离或换更高 ISO 胶卷。`;
+        } else if (exactPowerRatio < minPower.ratio) {
+          warning = `低于当前灯最低功率 (${minPower.label})，将过曝约 ${Math.log2(minPower.ratio / exactPowerRatio).toFixed(1)} EV，建议缩小光圈或加柔光罩/退后。`;
+        }
+        return {
+          exactPowerRatio,
+          exactFractionText: exactPowerRatio >= 1 ? `${exactPowerRatio.toFixed(1)}×` : `1/${Math.round(1 / exactPowerRatio)}`,
+          recommendedPower: best,
+          evDelta: bestDelta,
+          maxAchievableGnMeters,
+          safeAperture,
+          dRecInUnit: metersToUnit(dRecMeters, st.unit),
+          bandMinInUnit: metersToUnit(bandMeters.min, st.unit),
+          bandMaxInUnit: metersToUnit(bandMeters.max, st.unit),
+          warning,
+        };
+      }
+      /* ============================================================
+         CORE:END
+         ============================================================ */
+
+      const QUICK_DISTANCES_M = [0.8, 1.2, 1.5, 2.0, 3.0, 5.0];
+      const QUICK_DISTANCES_FT = [3, 4, 5, 6, 10, 15];
+      const THEMES = [
+        { id: 'light', label: '普通', metaColor: '#F4F2ED' },
+        { id: 'dark', label: '暗色', metaColor: '#111214' },
+        { id: 'warm', label: '暖棕', metaColor: '#12100E' },
+      ];
+
+      const SETTINGS_KEY = 'film_flash_html_settings_v1';
+      const CUSTOM_FLASHES_KEY = 'film_flash_html_custom_v1';
+
+      const DEFAULT_SETTINGS = {
+        mode: 'aperture',
+        activeFlashId: 'godox-lux-junior',
+        flashName: '神牛 Lux Junior',
+        gn100m: 12,
+        minPowerLabel: '1/64',
+        iso: 400,
+        powerLabel: '1/4',
+        distanceMeters: 2.0,
+        apertureValue: 4.0,
+        apertureLabel: 'f/4',
+        modifierId: 'direct',
+        modifierLossEv: 0,
+        exposureBiasEv: 0,
+        toleranceId: 'neg',
+        theme: 'light',
+        unit: 'm',
+        stepMode: 'third',
+      };
+
+      let activeTab = 'calc';
+      let settings = loadSettings();
+      let customFlashes = loadCustomFlashes();
+      let toastTimer = null;
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(SETTINGS_KEY);
+          if (raw) {
+            const parsed = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+            if (!THEMES.some((t) => t.id === parsed.theme)) parsed.theme = 'light';
+            return parsed;
+          }
+        } catch (e) {}
+        return Object.assign({}, DEFAULT_SETTINGS);
+      }
+
+      function saveSettings(patch) {
+        settings = Object.assign({}, settings, patch);
+        try {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        } catch (e) {}
+      }
+
+      function loadCustomFlashes() {
+        try {
+          const raw = localStorage.getItem(CUSTOM_FLASHES_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+          }
+        } catch (e) {}
+        return [];
+      }
+
+      function saveCustomFlashes(list) {
+        customFlashes = list;
+        try {
+          localStorage.setItem(CUSTOM_FLASHES_KEY, JSON.stringify(list));
+        } catch (e) {}
+      }
+
+      function getAllFlashes() {
+        return [...customFlashes, ...DEFAULT_FLASH_PRESETS];
+      }
+
+      function applyTheme() {
+        const themeObj = THEMES.find((t) => t.id === settings.theme) || THEMES[0];
+        document.documentElement.setAttribute('data-theme', themeObj.id);
+        const meta = document.getElementById('metaThemeColor');
+        if (meta) meta.setAttribute('content', themeObj.metaColor);
+        const btn = document.getElementById('btnCycleTheme');
+        if (btn) btn.textContent = themeObj.label;
+      }
+
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+      }
+
+      function esc(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function scalePct(v, lo, hi) {
+        if (hi <= lo || v <= 0 || lo <= 0) return 50;
+        const t = Math.log(v / lo) / Math.log(hi / lo);
+        return Math.max(4, Math.min(96, t * 100));
+      }
+
+      function buildToleranceRuler({ title, rangeText, band, mark, fmtLabel }) {
+        const tol = getToleranceById(settings.toleranceId);
+        const viewLo = Math.min(band.min, mark) / 1.35;
+        const viewHi = Math.max(band.max, mark) * 1.35;
+        const a = scalePct(band.min, viewLo, viewHi);
+        const b = scalePct(band.max, viewLo, viewHi);
+        const m = scalePct(mark, viewLo, viewHi);
+        const outOfBand = mark < band.min * 0.995 || mark > band.max * 1.005;
+
+        let zoneStyle = `left:${a}%;right:${100 - b}%;`;
+        if (b - a < 0.8) {
+          zoneStyle = `left:calc(${a}% - 1px);width:2px;`;
+        }
+
+        let labelsHtml = '';
+        if (tol.over === 0 && tol.under === 0) {
+          labelsHtml = `<span class="rlab" style="left:${m}%">${fmtLabel(mark)}</span>`;
+        } else if (b - a < 18) {
+          labelsHtml = `<span class="rlab" style="left:${(a + b) / 2}%">${fmtLabel(band.min)} – ${fmtLabel(band.max)}</span>`;
+        } else {
+          labelsHtml = `<span class="rlab" style="left:${a}%">${fmtLabel(band.min)}</span>` +
+                       `<span class="rlab" style="left:${b}%">${fmtLabel(band.max)}</span>`;
+        }
+
+        return `
+          <div class="ruler-wrap">
+            <div class="ruler-head">
+              <span class="ruler-title">${title}</span>
+              <span class="ruler-range-text mono">${rangeText}</span>
+            </div>
+            <div class="rtrack">
+              <div class="rzone" style="${zoneStyle}"></div>
+              <div class="rpin ${outOfBand ? 'out' : ''}" style="left:${m}%"></div>
+            </div>
+            <div class="rlabels">${labelsHtml}</div>
+            <div class="tol-row">
+              ${TOLERANCE_PRESETS.map((item) => `<div class="tol-chip ${tol.id === item.id ? 'active' : ''}" data-tol-id="${item.id}">${item.label}</div>`).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderHeader() {
+        applyTheme();
+        const titles = { calc: '胶片闪光测光表', chart: '距离光圈速查表', gear: '灯库与偏好设置' };
+        document.getElementById('headerTitle').textContent = titles[activeTab];
+        document.getElementById('headerBadge').textContent = `ISO ${settings.iso} · ${settings.unit.toUpperCase()}`;
+      }
+
+      function renderCalc() {
+        const unit = settings.unit;
+        const tol = getToleranceById(settings.toleranceId);
+        const gnInUnit = fmt(metersToUnit(settings.gn100m, unit), 1);
+        const distInUnit = fmt(metersToUnit(settings.distanceMeters, unit), 1);
+        const minIdx = POWER_LEVELS.findIndex((p) => p.label === settings.minPowerLabel);
+        const fmtAp = (f) => 'f/' + (f < 10 ? fmt(f, 1) : String(Math.round(f)));
+        const fmtDistLabel = (d) => `${fmt(d, d < 10 ? 1 : 0)} ${unit}`;
+
+        let title = '', mainVal = '', mainUnit = '', badgeClass = 'badge-green', badgeText = '', subKey = '', subVal = '', warning = '', effGn = 0, rulerHtml = '';
+        if (settings.mode === 'aperture') {
+          const res = solveApertureState(settings);
+          title = '建议镜头光圈';
+          mainVal = res.nearest.stop.label;
+          badgeText = fmtEvDelta(res.nearest.evDelta);
+          badgeClass = Math.abs(res.nearest.evDelta) < 0.15 ? 'badge-green' : 'badge-amber';
+          subKey = '理论精确值';
+          subVal = `f/${res.exactAperture.toFixed(1)}`;
+          warning = res.warning;
+          effGn = res.effectiveGnMeters;
+          rulerHtml = buildToleranceRuler({
+            title: '可用光圈容差',
+            rangeText: tol.over === 0 && tol.under === 0 ? fmtAp(res.exactAperture) : `${fmtAp(res.band.min)} – ${fmtAp(res.band.max)}`,
+            band: res.band,
+            mark: res.nearest.stop.value,
+            fmtLabel: fmtAp,
+          });
+        } else if (settings.mode === 'distance') {
+          const res = solveDistanceState(settings);
+          title = '最佳拍摄距离';
+          mainVal = fmt(res.exactInUnit, 2);
+          mainUnit = unit;
+          badgeText = `${settings.apertureLabel} · ${settings.powerLabel}`;
+          badgeClass = 'badge-amber';
+          subKey = `可用范围 (${tol.label})`;
+          subVal = tol.over === 0 && tol.under === 0
+            ? `${fmt(res.exactInUnit, 1)} ${unit}`
+            : `${fmt(res.minSafeInUnit, 1)}–${fmt(res.maxSafeInUnit, 1)} ${unit}`;
+          warning = res.warning;
+          effGn = res.effectiveGnMeters;
+          rulerHtml = buildToleranceRuler({
+            title: '可用距离容差',
+            rangeText: tol.over === 0 && tol.under === 0
+              ? `${fmt(res.exactInUnit, 1)} ${unit}`
+              : `${fmt(res.minSafeInUnit, 1)} – ${fmt(res.maxSafeInUnit, 1)} ${unit}`,
+            band: { min: res.minSafeInUnit, max: res.maxSafeInUnit },
+            mark: res.exactInUnit,
+            fmtLabel: fmtDistLabel,
+          });
+        } else {
+          const res = solvePowerState(settings);
+          const dActual = metersToUnit(settings.distanceMeters, unit);
+          title = '建议输出功率';
+          mainVal = res.recommendedPower.label;
+          badgeText = fmtEvDelta(res.evDelta);
+          badgeClass = Math.abs(res.evDelta) < 0.15 ? 'badge-green' : 'badge-amber';
+          subKey = '理论所需功率';
+          subVal = res.exactFractionText;
+          warning = res.warning;
+          effGn = res.maxAchievableGnMeters;
+          rulerHtml = buildToleranceRuler({
+            title: `${res.recommendedPower.label} 覆盖容差`,
+            rangeText: tol.over === 0 && tol.under === 0
+              ? `${fmt(res.dRecInUnit, 1)} ${unit}`
+              : `${fmt(res.bandMinInUnit, 1)} – ${fmt(res.bandMaxInUnit, 1)} ${unit}`,
+            band: { min: res.bandMinInUnit, max: res.bandMaxInUnit },
+            mark: dActual,
+            fmtLabel: fmtDistLabel,
+          });
+        }
+        if (warning) badgeClass = 'badge-warn';
+
+        const effGnDisplay = fmt(metersToUnit(effGn, unit), 1);
+        const bias = Number(settings.exposureBiasEv) || 0;
+        const biasText = bias === 0 ? '0 EV' : `${bias > 0 ? '+' : ''}${bias.toFixed(1)} EV`;
+        const totalLoss = (Number(settings.modifierLossEv) || 0) + bias;
+        const totalOffsetText = totalLoss === 0 ? '0 EV' : `-${totalLoss.toFixed(1)} EV 等效光通`;
+
+        const quickDists = (unit === 'ft' ? QUICK_DISTANCES_FT : QUICK_DISTANCES_M).map((v) => {
+          const m = unit === 'ft' ? unitToMeters(v, 'ft') : v;
+          const active = Math.abs(settings.distanceMeters - m) < 0.06;
+          return `<span class="mini-chip mono ${active ? 'active' : ''}" data-quick-dist="${m}">${v}${unit}</span>`;
+        }).join('');
+
+        const apertureStops = getApertureStops(settings.stepMode);
+
+        document.getElementById('view-calc').innerHTML = `
+          <div class="top-bar">
+            <div class="flash-pill" id="btnGoGear">
+              <span class="flash-dot"></span>
+              <span class="flash-pill-name">${esc(settings.flashName)}</span>
+              <span class="flash-pill-gn mono">GN ${gnInUnit}${unit}</span>
+              <span class="flash-pill-arrow">更换 ›</span>
+            </div>
+            <div class="unit-toggle mono" id="btnToggleUnit">${unit === 'm' ? '米 m' : '英尺 ft'}</div>
+          </div>
+
+          <div class="mode-switch">
+            <div class="mode-item ${settings.mode === 'aperture' ? 'active' : ''}" data-mode="aperture">算光圈</div>
+            <div class="mode-item ${settings.mode === 'distance' ? 'active' : ''}" data-mode="distance">算距离</div>
+            <div class="mode-item ${settings.mode === 'power' ? 'active' : ''}" data-mode="power">算功率</div>
+          </div>
+
+          <div class="meter-screen">
+            <div class="meter-top-row">
+              <span class="meter-label">${title}</span>
+              <span class="badge ${badgeClass} mono">${badgeText}</span>
+            </div>
+            <div class="meter-main-value mono">
+              <span>${mainVal}</span>${mainUnit ? `<span class="meter-main-unit">${mainUnit}</span>` : ''}
+            </div>
+            <div class="meter-sub-row">
+              <div class="meter-sub-item">
+                <span class="meter-sub-key">${subKey}</span>
+                <span class="meter-sub-val mono">${subVal}</span>
+              </div>
+              <div class="meter-divider"></div>
+              <div class="meter-sub-item">
+                <span class="meter-sub-key">当前有效 GN</span>
+                <span class="meter-sub-val mono">${effGnDisplay} ${unit}</span>
+              </div>
+            </div>
+            ${rulerHtml}
+            ${warning ? `<div class="meter-warning"><span class="warning-icon">!</span><span class="warning-text">${esc(warning)}</span></div>` : ''}
+          </div>
+
+          <div class="card">
+            <div class="param-block">
+              <div class="section-header">
+                <span class="section-title">胶卷感光度 ISO</span>
+                <span class="param-current mono">ISO ${settings.iso}</span>
+              </div>
+              <div class="chip-scroll">
+                ${ISO_OPTIONS.map((iso) => `<div class="chip mono ${settings.iso === iso ? 'active' : ''}" data-iso="${iso}">${iso}</div>`).join('')}
+              </div>
+            </div>
+
+            <div class="param-block">
+              <div class="section-header">
+                <span class="section-title">标称 GN (ISO 100)</span>
+                <span class="param-hint">${unit} · 支持手动微调</span>
+              </div>
+              <div class="stepper-row">
+                <button class="step-btn" type="button" data-gn-step="-5">-5</button>
+                <button class="step-btn" type="button" data-gn-step="-1">-1</button>
+                <input class="step-input mono" id="inputGn" type="number" step="0.5" inputmode="decimal" value="${gnInUnit}" />
+                <button class="step-btn" type="button" data-gn-step="1">+1</button>
+                <button class="step-btn" type="button" data-gn-step="5">+5</button>
+              </div>
+            </div>
+
+            ${settings.mode !== 'power' ? `
+              <div class="param-block">
+                <div class="section-header">
+                  <span class="section-title">输出功率挡位</span>
+                  <span class="param-current mono">${settings.powerLabel}</span>
+                </div>
+                <div class="power-grid">
+                  ${POWER_LEVELS.map((p, idx) => {
+                    const disabled = minIdx !== -1 && idx > minIdx;
+                    return `<div class="power-chip mono ${settings.powerLabel === p.label ? 'active' : ''} ${disabled ? 'disabled' : ''}" data-power="${p.label}" data-disabled="${disabled ? '1' : '0'}">${p.label}</div>`;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${settings.mode !== 'distance' ? `
+              <div class="param-block">
+                <div class="section-header">
+                  <span class="section-title">主体距离 (${unit})</span>
+                  <span class="param-current mono">${distInUnit} ${unit}</span>
+                </div>
+                <div class="stepper-row">
+                  <button class="step-btn" type="button" data-dist-step="-0.5">-0.5</button>
+                  <button class="step-btn" type="button" data-dist-step="-0.1">-0.1</button>
+                  <input class="step-input mono" id="inputDist" type="number" step="0.1" inputmode="decimal" value="${distInUnit}" />
+                  <button class="step-btn" type="button" data-dist-step="0.1">+0.1</button>
+                  <button class="step-btn" type="button" data-dist-step="0.5">+0.5</button>
+                </div>
+                <div class="quick-row">${quickDists}</div>
+              </div>
+            ` : ''}
+
+            ${settings.mode !== 'aperture' ? `
+              <div class="param-block">
+                <div class="section-header">
+                  <span class="section-title">镜头光圈</span>
+                  <span class="param-current mono">${settings.apertureLabel}</span>
+                </div>
+                <div class="chip-scroll">
+                  ${apertureStops.map((s) => `<div class="chip mono ${settings.apertureLabel === s.label ? 'active' : ''}" data-ap-label="${s.label}" data-ap-val="${s.value}">${s.label}</div>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <span class="section-title">布光方式与胶片补偿</span>
+              ${totalLoss !== 0 ? `<span class="param-hint mono">总修正 ${totalOffsetText}</span>` : ''}
+            </div>
+            <div class="sub-label">附件 / 跳闪光损</div>
+            <div class="chip-scroll">
+              ${MODIFIER_PRESETS.map((m) => `<div class="chip ${settings.modifierId === m.id ? 'active' : ''}" data-mod-id="${m.id}" data-mod-loss="${m.lossEv}">${m.name}${m.lossEv > 0 ? ' -' + m.lossEv + 'EV' : ''}</div>`).join('')}
+            </div>
+            <div class="bias-row">
+              <div>
+                <div class="bias-title">胶片曝光补偿</div>
+                <div class="bias-desc">彩色负片常设 +0.5 ~ +1.0 EV 保暗部</div>
+              </div>
+              <div class="bias-stepper">
+                <button class="mini-step-btn" type="button" data-bias-step="-0.5">-</button>
+                <span class="bias-val mono">${biasText}</span>
+                <button class="mini-step-btn" type="button" data-bias-step="0.5">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sync-tip">
+            <strong>胶片快门同步提示：</strong>光圈控制闪光主体曝光，快门控制环境光亮度。请勿超过机身最高闪光同步速度（焦平面帘幕通常 1/60s–1/125s，镜间快门可全速同步）。
+          </div>
+        `;
+      }
+
+      function renderChart() {
+        const unit = settings.unit;
+        const power = getPowerByLabel(settings.powerLabel);
+        const { effectiveGnMeters } = calcEffectiveGnMeters({
+          gn100m: settings.gn100m,
+          iso: settings.iso,
+          powerRatio: power.ratio,
+          modifierLossEv: settings.modifierLossEv,
+          exposureBiasEv: settings.exposureBiasEv,
+        });
+        const minIdx = POWER_LEVELS.findIndex((p) => p.label === settings.minPowerLabel);
+        const modObj = MODIFIER_PRESETS.find((m) => m.id === settings.modifierId);
+        const modName = modObj ? modObj.name : '直闪';
+
+        const rowsHtml = CHART_DISTANCES_M.map((distM) => {
+          const exactAperture = effectiveGnMeters / distM;
+          const nearest = findNearestAperture(exactAperture, settings.stepMode);
+          const distLabel = unit === 'ft' ? `${fmt(metersToUnit(distM, 'ft'), 1)} ft` : `${fmt(distM, 1)} m`;
+          const outOfRange = exactAperture < 1.2 || exactAperture > 22;
+          return `
+            <div class="table-row ${outOfRange ? 'dim' : ''}">
+              <span class="col-dist mono row-dist">${distLabel}</span>
+              <div class="col-rec"><span class="row-rec mono ${outOfRange ? 'dim' : ''}">${nearest.stop.label}</span></div>
+              <div class="col-exact">
+                <span class="row-exact mono">f/${exactAperture.toFixed(1)}</span>
+                <span class="row-delta mono">${fmtEvDelta(nearest.evDelta)}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        document.getElementById('view-chart').innerHTML = `
+          <div class="card">
+            <div class="section-header">
+              <span class="section-title">当前速查基准</span>
+              <span class="badge badge-amber mono">有效 GN ${fmt(metersToUnit(effectiveGnMeters, unit), 1)} ${unit}</span>
+            </div>
+            <div class="summary-title">${esc(settings.flashName)}</div>
+            <div class="summary-meta mono">标称 GN ${fmt(metersToUnit(settings.gn100m, unit), 1)}${unit} · ISO ${settings.iso} · 功率 ${settings.powerLabel} · ${modName}</div>
+            <div class="power-grid">
+              ${POWER_LEVELS.map((p, idx) => {
+                const disabled = minIdx !== -1 && idx > minIdx;
+                return `<div class="power-chip mono ${settings.powerLabel === p.label ? 'active' : ''} ${disabled ? 'disabled' : ''}" data-power="${p.label}" data-disabled="${disabled ? '1' : '0'}">${p.label}</div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-head">
+              <span class="col-dist">主体距离</span>
+              <span class="col-rec">推荐光圈</span>
+              <span class="col-exact">精确值 / 偏差</span>
+            </div>
+            ${rowsHtml}
+          </div>
+
+          <div class="card">
+            <div class="section-header"><span class="section-title">胶片闪光实战速记</span></div>
+            <div class="guide-item">
+              <div class="guide-title">1. 扫街估焦常用套路</div>
+              <div class="guide-desc">固定光圈在 f/5.6 或 f/8，切到「算距离」得出甜蜜点，将镜头对焦环拧到该距离即可盲拍。</div>
+            </div>
+            <div class="guide-item">
+              <div class="guide-title">2. 白天逆光补光（压光）</div>
+              <div class="guide-desc">先按背景测光定好光圈（快门勿超最高同步速度），让闪光灯输出比正常曝光低 -1 EV，人物保留立体感。</div>
+            </div>
+            <div class="guide-item">
+              <div class="guide-title">3. 彩色负片宁过勿欠</div>
+              <div class="guide-desc">负片高光宽容度极高但欠曝易发灰偏绿，遇到界于两档光圈之间时，优先选数字更小（更大光圈）的那一档。</div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderGear() {
+        const flashes = getAllFlashes();
+        const unit = settings.unit;
+
+        document.getElementById('view-gear').innerHTML = `
+          <div class="card">
+            <div class="section-header"><span class="section-title">外观与测量偏好</span></div>
+            <div class="pref-row">
+              <div>
+                <div class="pref-label">界面配色</div>
+                <div class="pref-sub">白天户外可用普通浅色，暗处用暗色/暖棕</div>
+              </div>
+              <div class="seg-group">
+                <div class="seg-btn ${settings.theme === 'light' ? 'active' : ''}" data-theme="light">普通</div>
+                <div class="seg-btn ${settings.theme === 'dark' ? 'active' : ''}" data-theme="dark">暗色</div>
+                <div class="seg-btn ${settings.theme === 'warm' ? 'active' : ''}" data-theme="warm">暖棕</div>
+              </div>
+            </div>
+            <div class="pref-row">
+              <span class="pref-label">距离单位</span>
+              <div class="seg-group">
+                <div class="seg-btn ${unit === 'm' ? 'active' : ''}" data-unit="m">米 (m)</div>
+                <div class="seg-btn ${unit === 'ft' ? 'active' : ''}" data-unit="ft">英尺 (ft)</div>
+              </div>
+            </div>
+            <div class="pref-row">
+              <div>
+                <div class="pref-label">光圈刻度步进</div>
+                <div class="pref-sub">老式纯机械镜头建议选「整档」</div>
+              </div>
+              <div class="seg-group">
+                <div class="seg-btn ${settings.stepMode === 'full' ? 'active' : ''}" data-step="full">整档</div>
+                <div class="seg-btn ${settings.stepMode === 'half' ? 'active' : ''}" data-step="half">1/2</div>
+                <div class="seg-btn ${settings.stepMode === 'third' ? 'active' : ''}" data-step="third">1/3</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <span class="section-title">添加我的闪光灯</span>
+              <span class="param-hint">保存在当前浏览器本地</span>
+            </div>
+            <div class="form-row">
+              <input class="text-input" id="newFlashName" placeholder="闪光灯名称（如 徕卡 SF20）" />
+            </div>
+            <div class="form-split">
+              <div class="form-col">
+                <label class="field-label">标称 GN (ISO 100 · 米)</label>
+                <input class="text-input mono" id="newFlashGn" type="number" step="0.5" inputmode="decimal" placeholder="如 20" />
+              </div>
+              <div class="form-col">
+                <label class="field-label">最低功率挡位</label>
+                <select class="select-input mono" id="newFlashMinPower">
+                  ${POWER_LEVELS.map((p) => `<option value="${p.label}" ${p.label === '1/64' ? 'selected' : ''}>${p.label}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <button class="add-btn" id="btnAddFlash" type="button">保存并设为当前用灯</button>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <span class="section-title">闪光灯预设库</span>
+              <span class="param-hint">点击切换</span>
+            </div>
+            ${flashes.map((item) => `
+              <div class="flash-item ${settings.activeFlashId === item.id ? 'active' : ''}" data-flash-id="${esc(item.id)}">
+                <div class="flash-item-main">
+                  <div class="flash-item-top">
+                    <span class="flash-item-name">${esc(item.name)}</span>
+                    ${settings.activeFlashId === item.id ? '<span class="badge badge-amber">当前使用</span>' : (!item.builtin ? '<span class="custom-tag">自定义</span>' : '')}
+                  </div>
+                  <div class="flash-item-note">${esc(item.note)}</div>
+                  <div class="flash-item-specs mono">GN ${fmt(metersToUnit(item.gn100m, unit), 1)}${unit} (ISO 100) · 最低 ${item.minPowerLabel}</div>
+                </div>
+                ${!item.builtin ? `<button class="del-btn" type="button" data-del-flash="${esc(item.id)}">删除</button>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      function renderAll() {
+        renderHeader();
+        if (activeTab === 'calc') renderCalc();
+        else if (activeTab === 'chart') renderChart();
+        else renderGear();
+      }
+
+      function switchTab(tab) {
+        activeTab = tab;
+        document.querySelectorAll('.view-panel').forEach((el) => el.classList.remove('active'));
+        document.getElementById(`view-${tab}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        renderAll();
+      }
+
+      function applyFlashSelection(target) {
+        const minIdx = POWER_LEVELS.findIndex((p) => p.label === target.minPowerLabel);
+        const curIdx = POWER_LEVELS.findIndex((p) => p.label === settings.powerLabel);
+        const nextPowerLabel = minIdx !== -1 && curIdx > minIdx ? target.minPowerLabel : settings.powerLabel;
+        saveSettings({
+          activeFlashId: target.id,
+          flashName: target.name,
+          gn100m: target.gn100m,
+          minPowerLabel: target.minPowerLabel,
+          powerLabel: nextPowerLabel,
+        });
+      }
+
+      // 顶部快捷切换主题（普通 -> 暗色 -> 暖棕）
+      document.getElementById('btnCycleTheme').addEventListener('click', () => {
+        const idx = THEMES.findIndex((t) => t.id === settings.theme);
+        const next = THEMES[(idx + 1) % THEMES.length];
+        saveSettings({ theme: next.id });
+        renderAll();
+        showToast(`已切换到${next.label}模式`);
       });
-    } else {
-      const rec = recommendPower(gnFull, S.f, lo, hi, tol);
-      const zones = powerZones(gnFull, S.f, lo, hi);
-      const dark = rec.k === 0 && rec.cover.dFull < lo;
-      const hot  = rec.k === 21 && rec.cover.dFull > hi;
 
-      el.rsub.textContent = `${fStr(S.f)} · ${lenRange(lo, hi)} · ${commonIso}`;
-      el.rval.className = 'txt';
-      if (dark){
-        el.rval.textContent = '不够';
-        el.rval.className = 'txt bad';
-        el.rband.innerHTML = `全功率只够到 <b>${lenStr(rec.cover.dFull)}</b>，近端还差 ${Math.abs(rec.errNear).toFixed(1)} 档。靠近、开大光圈，或换高感片。`;
-        el.rformula.innerHTML = `这一段需要 GN ${num(S.f * lo)} – ${num(S.f * hi)}，灯只有 ${num(gnFull)}`;
-      } else if (hot){
-        el.rval.textContent = powerLabel(21);
-        el.rval.className = 'txt bad';
-        el.rband.innerHTML = `收到 1/128 仍过曝，最远处还多 <b>${rec.errFar.toFixed(1)} 档</b>。收小光圈或加 ND。`;
-        el.rformula.innerHTML = `这一段需要 GN ${num(S.f * lo)} – ${num(S.f * hi)}`;
-      } else {
-        el.rval.textContent = powerLabel(rec.k);
-        el.rband.innerHTML = rec.spans
-          ? `整段都能曝对（近端 ${stopsStr(rec.errNear)} · 远端 ${stopsStr(rec.errFar)}）`
-          : `盖不住整段，最远差 <b>${rec.overflow.toFixed(1)} 档</b>。收窄范围，或者开大光圈。`;
-        el.rformula.innerHTML =
-          `需要 GN ${num(S.f * lo)} – ${num(S.f * hi)}（${num(lo, 1)}–${num(hi, 1)} 米 × ${fStr(S.f)}）<br>` +
-          `${powerLabel(rec.k)} 的准确距离是 ${num(rec.cover.dFull, 1)} 米`;
+      document.querySelector('.tab-bar').addEventListener('click', (e) => {
+        const btn = e.target.closest('.tab-btn');
+        if (btn) switchTab(btn.dataset.tab);
+      });
+
+      document.getElementById('view-calc').addEventListener('click', (e) => {
+        const t = e.target;
+        if (t.closest('#btnGoGear')) {
+          switchTab('gear');
+          return;
+        }
+        if (t.closest('#btnToggleUnit')) {
+          saveSettings({ unit: settings.unit === 'm' ? 'ft' : 'm' });
+          renderAll();
+          return;
+        }
+        const modeEl = t.closest('[data-mode]');
+        if (modeEl) {
+          saveSettings({ mode: modeEl.dataset.mode });
+          renderAll();
+          return;
+        }
+        const isoEl = t.closest('[data-iso]');
+        if (isoEl) {
+          saveSettings({ iso: Number(isoEl.dataset.iso) });
+          renderAll();
+          return;
+        }
+        const gnStepEl = t.closest('[data-gn-step]');
+        if (gnStepEl) {
+          const delta = Number(gnStepEl.dataset.gnStep);
+          const cur = metersToUnit(settings.gn100m, settings.unit);
+          const next = Math.max(1, Math.min(250, Math.round((cur + delta) * 10) / 10));
+          saveSettings({ gn100m: unitToMeters(next, settings.unit), flashName: '自定义 GN', activeFlashId: 'custom-inline' });
+          renderAll();
+          return;
+        }
+        const powerEl = t.closest('[data-power]');
+        if (powerEl) {
+          if (powerEl.dataset.disabled === '1') {
+            showToast(`当前灯最低支持 ${settings.minPowerLabel}`);
+            return;
+          }
+          saveSettings({ powerLabel: powerEl.dataset.power });
+          renderAll();
+          return;
+        }
+        const distStepEl = t.closest('[data-dist-step]');
+        if (distStepEl) {
+          const delta = Number(distStepEl.dataset.distStep);
+          const unit = settings.unit;
+          const cur = metersToUnit(settings.distanceMeters, unit);
+          const minV = unit === 'ft' ? 1.0 : 0.3;
+          const maxV = unit === 'ft' ? 100 : 30;
+          const next = Math.max(minV, Math.min(maxV, Math.round((cur + delta) * 10) / 10));
+          saveSettings({ distanceMeters: unitToMeters(next, unit) });
+          renderAll();
+          return;
+        }
+        const quickDistEl = t.closest('[data-quick-dist]');
+        if (quickDistEl) {
+          saveSettings({ distanceMeters: Number(quickDistEl.dataset.quickDist) });
+          renderAll();
+          return;
+        }
+        const apEl = t.closest('[data-ap-label]');
+        if (apEl) {
+          saveSettings({ apertureLabel: apEl.dataset.apLabel, apertureValue: Number(apEl.dataset.apVal) });
+          renderAll();
+          return;
+        }
+        const modEl = t.closest('[data-mod-id]');
+        if (modEl) {
+          saveSettings({ modifierId: modEl.dataset.modId, modifierLossEv: Number(modEl.dataset.modLoss) });
+          renderAll();
+          return;
+        }
+        const tolEl = t.closest('[data-tol-id]');
+        if (tolEl) {
+          saveSettings({ toleranceId: tolEl.dataset.tolId });
+          renderAll();
+          return;
+        }
+        const biasEl = t.closest('[data-bias-step]');
+        if (biasEl) {
+          const delta = Number(biasEl.dataset.biasStep);
+          const next = Math.max(-2.0, Math.min(2.5, Math.round(((Number(settings.exposureBiasEv) || 0) + delta) * 10) / 10));
+          saveSettings({ exposureBiasEv: next });
+          renderAll();
+        }
+      });
+
+      document.getElementById('view-calc').addEventListener('change', (e) => {
+        if (e.target.id === 'inputGn') {
+          const val = parseFloat(e.target.value);
+          if (Number.isFinite(val) && val > 0) {
+            const clamped = Math.max(1, Math.min(250, val));
+            saveSettings({ gn100m: unitToMeters(clamped, settings.unit), flashName: '自定义 GN', activeFlashId: 'custom-inline' });
+          }
+          renderAll();
+        } else if (e.target.id === 'inputDist') {
+          const val = parseFloat(e.target.value);
+          if (Number.isFinite(val) && val > 0) {
+            const minV = settings.unit === 'ft' ? 1.0 : 0.3;
+            const maxV = settings.unit === 'ft' ? 100 : 30;
+            const clamped = Math.max(minV, Math.min(maxV, val));
+            saveSettings({ distanceMeters: unitToMeters(clamped, settings.unit) });
+          }
+          renderAll();
+        }
+      });
+
+      document.getElementById('view-chart').addEventListener('click', (e) => {
+        const powerEl = e.target.closest('[data-power]');
+        if (powerEl) {
+          if (powerEl.dataset.disabled === '1') {
+            showToast(`当前灯最低支持 ${settings.minPowerLabel}`);
+            return;
+          }
+          saveSettings({ powerLabel: powerEl.dataset.power });
+          renderAll();
+        }
+      });
+
+      document.getElementById('view-gear').addEventListener('click', (e) => {
+        const t = e.target;
+        const delBtn = t.closest('[data-del-flash]');
+        if (delBtn) {
+          const delId = delBtn.dataset.delFlash;
+          const next = customFlashes.filter((f) => f.id !== delId);
+          saveCustomFlashes(next);
+          if (settings.activeFlashId === delId) {
+            applyFlashSelection(DEFAULT_FLASH_PRESETS[0]);
+          }
+          showToast('已移除');
+          renderAll();
+          return;
+        }
+        const themeBtn = t.closest('[data-theme]');
+        if (themeBtn) {
+          saveSettings({ theme: themeBtn.dataset.theme });
+          renderAll();
+          return;
+        }
+        const unitBtn = t.closest('[data-unit]');
+        if (unitBtn) {
+          saveSettings({ unit: unitBtn.dataset.unit });
+          renderAll();
+          return;
+        }
+        const stepBtn = t.closest('[data-step]');
+        if (stepBtn) {
+          const stepMode = stepBtn.dataset.step;
+          const nearest = findNearestAperture(settings.apertureValue, stepMode);
+          saveSettings({ stepMode, apertureLabel: nearest.stop.label, apertureValue: nearest.stop.value });
+          renderAll();
+          return;
+        }
+        if (t.id === 'btnAddFlash') {
+          const name = (document.getElementById('newFlashName').value || '').trim();
+          const gn = parseFloat(document.getElementById('newFlashGn').value);
+          const minPowerLabel = document.getElementById('newFlashMinPower').value || '1/64';
+          if (!name) {
+            showToast('请输入闪光灯名称');
+            return;
+          }
+          if (!Number.isFinite(gn) || gn < 1 || gn > 250) {
+            showToast('请输入有效 GN 值 (1~250)');
+            return;
+          }
+          const created = {
+            id: `custom-${Date.now()}`,
+            name,
+            gn100m: gn,
+            minPowerLabel,
+            note: '用户自定义闪光灯',
+            builtin: false,
+          };
+          saveCustomFlashes([created, ...customFlashes]);
+          applyFlashSelection(created);
+          showToast('已保存并切换');
+          renderAll();
+          return;
+        }
+        const flashItem = t.closest('[data-flash-id]');
+        if (flashItem) {
+          const target = getAllFlashes().find((f) => f.id === flashItem.dataset.flashId);
+          if (target) {
+            applyFlashSelection(target);
+            switchTab('calc');
+          }
+        }
+      });
+
+      renderAll();
+
+      if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
       }
-      el.ruler.innerHTML = rulerZonesHTML({ lo, hi, zones, recK: rec.k, fmt: lenStr });
-    }
-  }
-
-  renderTable(gn, gnRef, tol);
-}
-
-/* ---------- 对照表 ---------- */
-function renderTable(gn, gnRef, tol){
-  const list = SERIES[S.scale];
-  const isPower = S.mode === 'power';
-  const ranged = S.distMode === 'range' && S.mode !== 'dist';
-  const lo = ranged ? S.dLo : S.d;
-  const hi = ranged ? S.dHi : S.d;
-  const gnFull = gnRef * Math.sqrt(S.iso / 100);
-
-  el.tblTitle.textContent = isPower
-    ? (ranged ? `在 ${lenRange(lo, hi)} 内，各光圈要多少功率` : `在 ${lenStr(S.d)} 处，各光圈要多少功率`)
-    : '换个光圈看看';
-  el.th2.textContent = isPower ? '功率' : '距离';
-  el.th3.textContent = isPower ? (ranged ? '盖住整段？' : '对应 GN') : '可用范围';
-
-  let highlight = null;
-  if (S.mode === 'dist' || isPower) highlight = Number(S.f);
-  if (S.mode === 'fnum'){
-    highlight = ranged
-      ? recommendAperture(gn, lo, hi, tol, list).f
-      : nearestF(list, fExactFor(gn, S.d));
-  }
-
-  const rows = list.map(f => {
-    let c2, c3;
-    if (isPower){
-      if (ranged){
-        const rec = recommendPower(gnFull, f, lo, hi, tol);
-        const dark = rec.k === 0 && rec.cover.dFull < lo;
-        c2 = dark ? '不够' : powerLabel(rec.k);
-        c3 = rec.spans ? '整段' : (dark ? '—' : `差 ${rec.overflow.toFixed(1)} 档`);
-      } else {
-        const p = powerFor(gnRef, S.iso, f, S.d);
-        c2 = p.frac > 1 ? '不够' : (p.frac < 1/128 ? '太强' : powerLabel(clamp(p.idx, 0, 21)));
-        c3 = 'GN ' + num(p.gnReq);
-      }
-    } else {
-      const d = distFor(gn, f);
-      const b = bandFor(d, tol);
-      c2 = lenStr(d);
-      c3 = lenRange(b.min, b.max);
-    }
-    const on = f === highlight ? ' on' : '';
-    return `<div class="trow${on}" data-f="${f}"><div class="c1">${fStr(f)}</div><div class="c2">${c2}</div><div class="c3">${c3}</div></div>`;
-  }).join('');
-
-  el.tbl.innerHTML = rows;
-
-  if (highlight !== null && highlight !== lastHighlight){
-    const node = el.tbl.querySelector('.trow.on');
-    if (node) el.tbl.scrollTop = Math.max(0, node.offsetTop - el.tbl.clientHeight / 2 + 12);
-  }
-  lastHighlight = highlight;
-}
-
-/* ---------- 事件 ---------- */
-function setMode(m){ S.mode = m; save(); render(); }
-
-document.querySelectorAll('.seg button').forEach(b => {
-  b.addEventListener('click', () => setMode(b.dataset.mode));
-});
-
-el.isoChips.addEventListener('change', e => {
-  S.iso = Number(e.target.value); save(); render();
-});
-
-el.flashSel.addEventListener('change', e => {
-  S.flash = e.target.value;
-  const f = FLASHES.find(x => x.id === S.flash);
-  if (f && !f.custom) S.gn = f.gn;
-  save(); render();
-});
-
-el.gnIn.addEventListener('input', e => {
-  S.gn = clamp(Number(e.target.value) || 36, 1, 200); save(); render();
-});
-
-el.powerSel.addEventListener('change', e => { S.power = Number(e.target.value); save(); render(); });
-
-el.fSel.addEventListener('change', e => { S.f = Number(e.target.value); save(); render(); });
-
-el.tolSel.addEventListener('change', e => { S.tol = e.target.value; save(); render(); });
-
-el.scaleSel.addEventListener('change', e => {
-  S.scale = e.target.value;
-  fillApertures();
-  save(); render();
-});
-
-function setDist(v){
-  S.d = clamp(Math.round(v * 10) / 10, 0.2, 60);
-  el.dIn.value = String(S.d);
-  save(); render();
-}
-el.dIn.addEventListener('input', e => {
-  const v = Number(e.target.value);
-  if (isFinite(v) && v > 0){ S.d = clamp(v, 0.2, 60); save(); render(); }
-});
-el.dIn.addEventListener('blur', () => { el.dIn.value = String(S.d); });
-el.dMinus.addEventListener('click', () => setDist(S.d - 0.1));
-el.dPlus.addEventListener('click', () => setDist(S.d + 0.1));
-
-/* 距离区间 */
-el.distMode.addEventListener('click', e => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  S.distMode = b.dataset.dm; save(); render();
-});
-
-function setRangeEnd(which, v){
-  v = clamp(Math.round(v * 10) / 10, 0.2, 60);
-  if (which === 'lo') S.dLo = Math.min(v, S.dHi);
-  else S.dHi = Math.max(v, S.dLo);
-  save(); render();
-}
-
-[['dLoIn', 'lo'], ['dHiIn', 'hi']].forEach(([id, which]) => {
-  el[id].addEventListener('input', e => {
-    const v = Number(e.target.value);
-    if (isFinite(v) && v > 0) setRangeEnd(which, v);
-  });
-  el[id].addEventListener('blur', () => { el[id].value = String(which === 'lo' ? S.dLo : S.dHi); });
-});
-
-/* 表格点一行 = 直接选这档光圈 */
-el.tbl.addEventListener('click', e => {
-  const row = e.target.closest('.trow');
-  if (!row) return;
-  if (S.mode === 'fnum') return;  // 求光圈时答案已定，点表格不改变任何东西
-  S.f = Number(row.dataset.f);
-  save(); render();
-});
-
-/* 长按 − / + 连续调 */
-function holdRepeat(btn, step){
-  let timer = null;
-  const start = () => { if (timer) return; timer = setInterval(step, 90); };
-  const stop = () => { clearInterval(timer); timer = null; };
-  btn.addEventListener('pointerdown', start);
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
-}
-
-holdRepeat(el.dMinus, () => setDist(S.d - 0.1));
-holdRepeat(el.dPlus, () => setDist(S.d + 0.1));
-holdRepeat(el.dLoMinus, () => setRangeEnd('lo', S.dLo - 0.1));
-holdRepeat(el.dLoPlus, () => setRangeEnd('lo', S.dLo + 0.1));
-holdRepeat(el.dHiMinus, () => setRangeEnd('hi', S.dHi - 0.1));
-holdRepeat(el.dHiPlus, () => setRangeEnd('hi', S.dHi + 0.1));
-
-el.dLoMinus.addEventListener('click', () => setRangeEnd('lo', S.dLo - 0.1));
-el.dLoPlus.addEventListener('click', () => setRangeEnd('lo', S.dLo + 0.1));
-el.dHiMinus.addEventListener('click', () => setRangeEnd('hi', S.dHi - 0.1));
-el.dHiPlus.addEventListener('click', () => setRangeEnd('hi', S.dHi + 0.1));
-
-/* ---------- 启动 ---------- */
-load();
-buildControls();
-fillApertures();
-render();
-
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
-}
-</script>
+    })();
+  </script>
 </body>
 </html>
