@@ -602,6 +602,72 @@
       font-weight: 600;
     }
 
+    .dof-box {
+      margin-top: 10px;
+      padding: 9px 11px;
+      border-radius: 9px;
+      background: var(--meter-sub-bg);
+      border: 1px solid var(--meter-sub-border);
+    }
+
+    .dof-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .dof-title {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .dof-val {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .dof-chips {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .dof-chips::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dof-chip {
+      flex: 1;
+      text-align: center;
+      padding: 4px 6px;
+      border-radius: 6px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .dof-chip.active {
+      background: var(--amber-bg);
+      border-color: var(--amber);
+      color: var(--amber-light);
+      font-weight: 600;
+    }
+
+    .gn-zoom-hint {
+      margin-top: 7px;
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.45;
+    }
+
     /* Controls */
     .param-block {
       margin-bottom: 16px;
@@ -654,7 +720,7 @@
 
     .power-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 7px;
     }
 
@@ -1191,7 +1257,15 @@
         { label: '1/32', ratio: 1 / 32 },
         { label: '1/64', ratio: 1 / 64 },
         { label: '1/128', ratio: 1 / 128 },
+        { label: '1/256', ratio: 1 / 256 },
       ];
+      const ZOOM_COMP_PRESETS = [
+        { id: 'none', label: '按标称', lossEv: 0 },
+        { id: '50mm', label: '50mm (−0.7EV)', lossEv: 0.7 },
+        { id: '35mm', label: '35mm (−1.0EV)', lossEv: 1.0 },
+        { id: '28mm', label: '28mm (−1.3EV)', lossEv: 1.3 },
+      ];
+      const DOF_FOCAL_OPTIONS = [0, 28, 35, 45, 50];
       const MODIFIER_PRESETS = [
         { id: 'direct', name: '直闪', lossEv: 0 },
         { id: 'diffuser', name: '柔光罩', lossEv: 1.0 },
@@ -1279,17 +1353,32 @@
         return `${sign}${rounded.toFixed(1)} EV (${rounded > 0 ? '略过曝' : '略欠曝'})`;
       }
 
-      function calcEffectiveGnMeters({ gn100m, iso = 100, powerRatio = 1, modifierLossEv = 0, exposureBiasEv = 0 }) {
+      function calcEffectiveGnMeters({ gn100m, iso = 100, powerRatio = 1, modifierLossEv = 0, exposureBiasEv = 0, zoomLossEv = 0 }) {
         const safeGn = Math.max(0.1, Number(gn100m) || 12);
         const safeIso = Math.max(1, Number(iso) || 100);
         const safePower = Math.max(1 / 256, Number(powerRatio) || 1);
-        const totalEv = (Number(modifierLossEv) || 0) + (Number(exposureBiasEv) || 0);
+        const totalEv = (Number(modifierLossEv) || 0) + (Number(exposureBiasEv) || 0) + (Number(zoomLossEv) || 0);
         const isoFactor = Math.sqrt(safeIso / 100);
         const powerFactor = Math.sqrt(safePower);
         const evFactor = Math.pow(2, -totalEv / 2);
         return {
           effectiveGnMeters: safeGn * isoFactor * powerFactor * evFactor,
           maxAchievableGnMeters: safeGn * isoFactor * evFactor,
+        };
+      }
+
+      function calcDofMeters({ focalMm, aperture, focusMeters, cocMm = 0.03 }) {
+        const f = Number(focalMm) || 0;
+        const n = Math.max(0.7, Number(aperture) || 4);
+        const dMm = Math.max(100, (Number(focusMeters) || 1) * 1000);
+        if (f <= 0) return null;
+        const hyperMm = (f * f) / (n * cocMm) + f;
+        const nearMm = (dMm * (hyperMm - f)) / (hyperMm + dMm - 2 * f);
+        const farMm = dMm >= hyperMm ? Infinity : (dMm * (hyperMm - f)) / (hyperMm - dMm);
+        return {
+          hyperfocalMeters: hyperMm / 1000,
+          nearMeters: Math.max(0.1, nearMm / 1000),
+          farMeters: Number.isFinite(farMm) ? farMm / 1000 : Infinity,
         };
       }
 
@@ -1333,6 +1422,7 @@
           powerRatio: power.ratio,
           modifierLossEv: st.modifierLossEv,
           exposureBiasEv: st.exposureBiasEv,
+          zoomLossEv: st.zoomLossEv,
         });
         const exactAperture = effectiveGnMeters / safeDist;
         const nearest = findNearestAperture(exactAperture, st.stepMode);
@@ -1359,6 +1449,7 @@
           powerRatio: power.ratio,
           modifierLossEv: st.modifierLossEv,
           exposureBiasEv: st.exposureBiasEv,
+          zoomLossEv: st.zoomLossEv,
         });
         const exactDistanceMeters = effectiveGnMeters / safeAperture;
         const bandMeters = calcDistanceBand(exactDistanceMeters, tol);
@@ -1388,6 +1479,7 @@
           powerRatio: 1,
           modifierLossEv: st.modifierLossEv,
           exposureBiasEv: st.exposureBiasEv,
+          zoomLossEv: st.zoomLossEv,
         });
         const exactPowerRatio = Math.pow((safeDist * safeAperture) / maxAchievableGnMeters, 2);
         const available = getAvailablePowers(st.minPowerLabel);
@@ -1454,6 +1546,9 @@
         modifierId: 'direct',
         modifierLossEv: 0,
         exposureBiasEv: 0,
+        zoomCompId: 'none',
+        zoomLossEv: 0,
+        dofFocalMm: 0,
         toleranceId: 'neg',
         theme: 'light',
         unit: 'm',
@@ -1596,6 +1691,8 @@
         const fmtDistLabel = (d) => `${fmt(d, d < 10 ? 1 : 0)} ${unit}`;
 
         let title = '', mainVal = '', mainUnit = '', badgeClass = 'badge-green', badgeText = '', subKey = '', subVal = '', warning = '', effGn = 0, rulerHtml = '';
+        let dofAperture = Number(settings.apertureValue) || 4;
+        let dofFocusMeters = Number(settings.distanceMeters) || 2;
         if (settings.mode === 'aperture') {
           const res = solveApertureState(settings);
           title = '建议镜头光圈';
@@ -1606,6 +1703,7 @@
           subVal = `f/${res.exactAperture.toFixed(1)}`;
           warning = res.warning;
           effGn = res.effectiveGnMeters;
+          dofAperture = res.nearest.stop.value;
           rulerHtml = buildToleranceRuler({
             title: '可用光圈容差',
             rangeText: tol.over === 0 && tol.under === 0 ? fmtAp(res.exactAperture) : `${fmtAp(res.band.min)} – ${fmtAp(res.band.max)}`,
@@ -1626,6 +1724,7 @@
             : `${fmt(res.minSafeInUnit, 1)}–${fmt(res.maxSafeInUnit, 1)} ${unit}`;
           warning = res.warning;
           effGn = res.effectiveGnMeters;
+          dofFocusMeters = res.exactDistanceMeters;
           rulerHtml = buildToleranceRuler({
             title: '可用距离容差',
             rangeText: tol.over === 0 && tol.under === 0
@@ -1658,11 +1757,37 @@
         }
         if (warning) badgeClass = 'badge-warn';
 
+        const dofFocalMm = Number(settings.dofFocalMm) || 0;
+        const dofInfo = calcDofMeters({
+          focalMm: dofFocalMm,
+          aperture: dofAperture,
+          focusMeters: dofFocusMeters,
+        });
+        const dofText = dofInfo
+          ? `${fmt(metersToUnit(dofInfo.nearMeters, unit), 1)} – ${Number.isFinite(dofInfo.farMeters) ? fmt(metersToUnit(dofInfo.farMeters, unit), 1) : '∞'} ${unit} · 超焦距 ${fmt(metersToUnit(dofInfo.hyperfocalMeters, unit), 1)} ${unit}`
+          : '选焦距看 135 估焦景深';
+        const dofHtml = `
+          <div class="dof-box">
+            <div class="dof-head">
+              <span class="dof-title">估焦景深参考 (${fmtAp(dofAperture)} @ ${fmt(metersToUnit(dofFocusMeters, unit), 1)} ${unit})</span>
+              <span class="dof-val mono">${dofText}</span>
+            </div>
+            <div class="dof-chips">
+              ${DOF_FOCAL_OPTIONS.map((mm) => `<div class="dof-chip mono ${dofFocalMm === mm ? 'active' : ''}" data-dof-mm="${mm}">${mm === 0 ? '关闭' : mm + 'mm'}</div>`).join('')}
+            </div>
+          </div>
+        `;
+
         const effGnDisplay = fmt(metersToUnit(effGn, unit), 1);
         const bias = Number(settings.exposureBiasEv) || 0;
         const biasText = bias === 0 ? '0 EV' : `${bias > 0 ? '+' : ''}${bias.toFixed(1)} EV`;
-        const totalLoss = (Number(settings.modifierLossEv) || 0) + bias;
-        const totalOffsetText = totalLoss === 0 ? '0 EV' : `-${totalLoss.toFixed(1)} EV 等效光通`;
+        const modLoss = Number(settings.modifierLossEv) || 0;
+        const zoomLoss = Number(settings.zoomLossEv) || 0;
+        const offsetParts = [];
+        if (modLoss > 0) offsetParts.push(`附件 −${modLoss.toFixed(1)} EV`);
+        if (zoomLoss > 0) offsetParts.push(`变焦 −${zoomLoss.toFixed(1)} EV`);
+        if (bias !== 0) offsetParts.push(`胶片 ${bias > 0 ? '+' : ''}${bias.toFixed(1)} EV`);
+        const totalOffsetText = offsetParts.join(' · ');
 
         const quickDists = (unit === 'ft' ? QUICK_DISTANCES_FT : QUICK_DISTANCES_M).map((v) => {
           const m = unit === 'ft' ? unitToMeters(v, 'ft') : v;
@@ -1709,6 +1834,7 @@
               </div>
             </div>
             ${rulerHtml}
+            ${dofHtml}
             ${warning ? `<div class="meter-warning"><span class="warning-icon">!</span><span class="warning-text">${esc(warning)}</span></div>` : ''}
           </div>
 
@@ -1735,12 +1861,16 @@
                 <button class="step-btn" type="button" data-gn-step="1">+1</button>
                 <button class="step-btn" type="button" data-gn-step="5">+5</button>
               </div>
+              <div class="quick-row">
+                ${ZOOM_COMP_PRESETS.map((z) => `<span class="mini-chip mono ${settings.zoomCompId === z.id ? 'active' : ''}" data-zoom-id="${z.id}" data-zoom-loss="${z.lossEv}">${z.label}</span>`).join('')}
+              </div>
+              <div class="gn-zoom-hint">若闪光灯 GN 按 105mm 长焦端标称，配合 28–50mm 胶片镜头可点上方折算。</div>
             </div>
 
             ${settings.mode !== 'power' ? `
               <div class="param-block">
                 <div class="section-header">
-                  <span class="section-title">输出功率挡位</span>
+                  <span class="section-title">输出功率挡位 (最低 ${settings.minPowerLabel})</span>
                   <span class="param-current mono">${settings.powerLabel}</span>
                 </div>
                 <div class="power-grid">
@@ -1785,7 +1915,7 @@
           <div class="card">
             <div class="section-header">
               <span class="section-title">布光方式与胶片补偿</span>
-              ${totalLoss !== 0 ? `<span class="param-hint mono">总修正 ${totalOffsetText}</span>` : ''}
+              ${totalOffsetText ? `<span class="param-hint mono">${totalOffsetText}</span>` : ''}
             </div>
             <div class="sub-label">附件 / 跳闪光损</div>
             <div class="chip-scroll">
@@ -1819,6 +1949,7 @@
           powerRatio: power.ratio,
           modifierLossEv: settings.modifierLossEv,
           exposureBiasEv: settings.exposureBiasEv,
+          zoomLossEv: settings.zoomLossEv,
         });
         const minIdx = POWER_LEVELS.findIndex((p) => p.label === settings.minPowerLabel);
         const modObj = MODIFIER_PRESETS.find((m) => m.id === settings.modifierId);
@@ -2039,7 +2170,27 @@
           const delta = Number(gnStepEl.dataset.gnStep);
           const cur = metersToUnit(settings.gn100m, settings.unit);
           const next = Math.max(1, Math.min(250, Math.round((cur + delta) * 10) / 10));
-          saveSettings({ gn100m: unitToMeters(next, settings.unit), flashName: '自定义 GN', activeFlashId: 'custom-inline' });
+          saveSettings({
+            gn100m: unitToMeters(next, settings.unit),
+            flashName: '自定义 GN',
+            activeFlashId: 'custom-inline',
+            minPowerLabel: '1/256',
+          });
+          renderAll();
+          return;
+        }
+        const zoomEl = t.closest('[data-zoom-id]');
+        if (zoomEl) {
+          saveSettings({
+            zoomCompId: zoomEl.dataset.zoomId,
+            zoomLossEv: Number(zoomEl.dataset.zoomLoss) || 0,
+          });
+          renderAll();
+          return;
+        }
+        const dofEl = t.closest('[data-dof-mm]');
+        if (dofEl) {
+          saveSettings({ dofFocalMm: Number(dofEl.dataset.dofMm) || 0 });
           renderAll();
           return;
         }
@@ -2103,7 +2254,12 @@
           const val = parseFloat(e.target.value);
           if (Number.isFinite(val) && val > 0) {
             const clamped = Math.max(1, Math.min(250, val));
-            saveSettings({ gn100m: unitToMeters(clamped, settings.unit), flashName: '自定义 GN', activeFlashId: 'custom-inline' });
+            saveSettings({
+              gn100m: unitToMeters(clamped, settings.unit),
+              flashName: '自定义 GN',
+              activeFlashId: 'custom-inline',
+              minPowerLabel: '1/256',
+            });
           }
           renderAll();
         } else if (e.target.id === 'inputDist') {

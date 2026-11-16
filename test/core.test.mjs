@@ -17,9 +17,10 @@ const code = html.slice(begin, end);
 const core = new Function(code + `
   return {
     METERS_TO_FEET, ISO_OPTIONS, POWER_LEVELS, MODIFIER_PRESETS, TOLERANCE_PRESETS,
+    ZOOM_COMP_PRESETS, DOF_FOCAL_OPTIONS,
     FULL_STOPS, HALF_STOPS, THIRD_STOPS, DEFAULT_FLASH_PRESETS, CHART_DISTANCES_M,
     getApertureStops, getPowerByLabel, getAvailablePowers, getToleranceById,
-    metersToUnit, unitToMeters, fmt, fmtEvDelta, calcEffectiveGnMeters,
+    metersToUnit, unitToMeters, fmt, fmtEvDelta, calcEffectiveGnMeters, calcDofMeters,
     findNearestAperture, calcApertureBand, calcDistanceBand,
     solveApertureState, solveDistanceState, solvePowerState
   };
@@ -27,9 +28,10 @@ const core = new Function(code + `
 
 const {
   METERS_TO_FEET, ISO_OPTIONS, POWER_LEVELS, MODIFIER_PRESETS, TOLERANCE_PRESETS,
+  ZOOM_COMP_PRESETS, DOF_FOCAL_OPTIONS,
   FULL_STOPS, HALF_STOPS, THIRD_STOPS, DEFAULT_FLASH_PRESETS,
   getApertureStops, getPowerByLabel, getAvailablePowers, getToleranceById,
-  metersToUnit, unitToMeters, calcEffectiveGnMeters, findNearestAperture,
+  metersToUnit, unitToMeters, calcEffectiveGnMeters, calcDofMeters, findNearestAperture,
   calcApertureBand, calcDistanceBand, solveApertureState, solveDistanceState, solvePowerState,
 } = core;
 
@@ -47,7 +49,7 @@ test('有效 GN 随功率按 √ 缩放，且与 ISO 叠加正确', () => {
   near(calcEffectiveGnMeters({ gn100m: 12, iso: 400, powerRatio: 0.25 }).effectiveGnMeters, 12);
 });
 
-test('附件光损与胶片曝光补偿按 EV 折算', () => {
+test('附件光损、变焦折算与胶片曝光补偿按 EV 折算', () => {
   // -1 EV 柔光罩 + +1 EV 胶片过曝 = 总计 -2 EV，有效 GN 减半
   const { effectiveGnMeters } = calcEffectiveGnMeters({
     gn100m: 24,
@@ -57,6 +59,15 @@ test('附件光损与胶片曝光补偿按 EV 折算', () => {
     exposureBiasEv: 1,
   });
   near(effectiveGnMeters, 12);
+
+  // 35mm 变焦折算 -1.0 EV：有效 GN 除以 √2
+  const zoomed = calcEffectiveGnMeters({
+    gn100m: 36,
+    iso: 100,
+    powerRatio: 1,
+    zoomLossEv: 1.0,
+  });
+  near(zoomed.effectiveGnMeters, 36 / Math.SQRT2);
 });
 
 test('算光圈：整档/半档/1/3 档就近匹配与 EV 偏差', () => {
@@ -163,7 +174,7 @@ test('算功率：反推准确挡位与最低功率限制', () => {
   assert.ok(restricted.warning.includes('1/1'));
 });
 
-test('单位换算与光圈/功率/容差预设完整性', () => {
+test('单位换算与光圈/功率/容差/景深预设完整性', () => {
   near(metersToUnit(1, 'ft'), METERS_TO_FEET);
   near(unitToMeters(METERS_TO_FEET, 'ft'), 1);
 
@@ -171,12 +182,16 @@ test('单位换算与光圈/功率/容差预设完整性', () => {
   assert.equal(getApertureStops('half').length, HALF_STOPS.length);
   assert.equal(getApertureStops('third').length, THIRD_STOPS.length);
   assert.equal(getPowerByLabel('1/16').ratio, 1 / 16);
+  assert.equal(getPowerByLabel('1/256').ratio, 1 / 256);
   assert.equal(getAvailablePowers('1/16').length, 5);
+  assert.equal(getAvailablePowers('1/256').length, 9);
   assert.equal(getToleranceById('slide').over, 0.5);
   assert.ok(ISO_OPTIONS.includes(160) && ISO_OPTIONS.includes(400));
   assert.ok(MODIFIER_PRESETS.some((m) => m.id === 'bounce' && m.lossEv === 2.0));
   assert.ok(TOLERANCE_PRESETS.length === 4);
-  assert.ok(POWER_LEVELS.length === 8);
+  assert.ok(ZOOM_COMP_PRESETS.length === 4);
+  assert.ok(DOF_FOCAL_OPTIONS.includes(35) && DOF_FOCAL_OPTIONS.includes(45));
+  assert.ok(POWER_LEVELS.length === 9);
   assert.ok(DEFAULT_FLASH_PRESETS.length >= 10);
   const bAp = calcApertureBand(4, { over: 2, under: 1 });
   near(bAp.min, 2);
@@ -184,4 +199,33 @@ test('单位换算与光圈/功率/容差预设完整性', () => {
   const bDist = calcDistanceBand(4, { over: 2, under: 1 });
   near(bDist.min, 2);
   near(bDist.max, 4 * Math.SQRT2);
+});
+
+test('1/256 极低功率与大光圈镜头计算', () => {
+  const { effectiveGnMeters } = calcEffectiveGnMeters({ gn100m: 32, iso: 100, powerRatio: 1 / 256 });
+  near(effectiveGnMeters, 2);
+
+  // GN 36 @ ISO 400 -> GN72; f/1.8 @ 2.5m 需要 GN 4.5 -> (4.5/72)^2 = 1/256
+  const res = solvePowerState({
+    gn100m: 36,
+    iso: 400,
+    distanceMeters: 2.5,
+    apertureValue: 1.8,
+    minPowerLabel: '1/256',
+    unit: 'm',
+    toleranceId: 'neg',
+  });
+  assert.equal(res.recommendedPower.label, '1/256');
+  assert.equal(res.warning, '');
+});
+
+test('135 胶片估焦景深与超焦距计算', () => {
+  assert.equal(calcDofMeters({ focalMm: 0, aperture: 8, focusMeters: 3 }), null);
+  const dof = calcDofMeters({ focalMm: 35, aperture: 8, focusMeters: 3.0 });
+  near(dof.hyperfocalMeters, 5.1391667, 1e-4);
+  near(dof.nearMeters, 1.8976, 1e-3);
+  near(dof.farMeters, 7.1578, 1e-3);
+
+  const hyper = calcDofMeters({ focalMm: 35, aperture: 8, focusMeters: 6.0 });
+  assert.equal(hyper.farMeters, Infinity);
 });
