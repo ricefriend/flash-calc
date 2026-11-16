@@ -153,6 +153,8 @@
     html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
+      overflow-x: hidden;
       background-color: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
@@ -163,6 +165,7 @@
     }
 
     .app-shell {
+      width: 100%;
       max-width: 520px;
       margin: 0 auto;
       min-height: 100vh;
@@ -221,10 +224,14 @@
 
     .container {
       padding: 14px 14px 18px;
+      width: 100%;
+      min-width: 0;
     }
 
     .view-panel {
       display: none;
+      width: 100%;
+      min-width: 0;
     }
 
     .view-panel.active {
@@ -242,6 +249,8 @@
       border-radius: 14px;
       padding: 15px;
       margin-bottom: 12px;
+      width: 100%;
+      min-width: 0;
     }
 
     .section-header {
@@ -984,12 +993,18 @@
     /* Gear Page */
     .pref-row {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       padding: 4px 0 12px;
       margin-bottom: 12px;
       border-bottom: 1px solid var(--border);
-      gap: 8px;
+      gap: 8px 10px;
+    }
+
+    .pref-row > div:first-child {
+      flex: 1 1 150px;
+      min-width: 0;
     }
 
     .pref-row:last-child {
@@ -2028,9 +2043,9 @@
                 <div class="pref-sub">白天户外可用普通浅色，暗处用暗色/暖棕</div>
               </div>
               <div class="seg-group">
-                <div class="seg-btn ${settings.theme === 'light' ? 'active' : ''}" data-theme="light">普通</div>
-                <div class="seg-btn ${settings.theme === 'dark' ? 'active' : ''}" data-theme="dark">暗色</div>
-                <div class="seg-btn ${settings.theme === 'warm' ? 'active' : ''}" data-theme="warm">暖棕</div>
+                <div class="seg-btn ${settings.theme === 'light' ? 'active' : ''}" data-set-theme="light">普通</div>
+                <div class="seg-btn ${settings.theme === 'dark' ? 'active' : ''}" data-set-theme="dark">暗色</div>
+                <div class="seg-btn ${settings.theme === 'warm' ? 'active' : ''}" data-set-theme="warm">暖棕</div>
               </div>
             </div>
             <div class="pref-row">
@@ -2300,9 +2315,9 @@
           renderAll();
           return;
         }
-        const themeBtn = t.closest('[data-theme]');
+        const themeBtn = t.closest('[data-set-theme]');
         if (themeBtn) {
-          saveSettings({ theme: themeBtn.dataset.theme });
+          saveSettings({ theme: themeBtn.dataset.setTheme });
           renderAll();
           return;
         }
@@ -2320,7 +2335,7 @@
           renderAll();
           return;
         }
-        if (t.id === 'btnAddFlash') {
+        if (t.closest('#btnAddFlash')) {
           const name = (document.getElementById('newFlashName').value || '').trim();
           const gn = parseFloat(document.getElementById('newFlashGn').value);
           const minPowerLabel = document.getElementById('newFlashMinPower').value || '1/64';
